@@ -1,0 +1,9 @@
+# Carpetas de compilación de .NET
+bin/
+obj/
+
+# Archivos de guardado local
+save.txt
+
+# Archivos temporales generados por ti
+Codigo_Megacompleto.txt

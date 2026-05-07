@@ -1,0 +1,42 @@
+
+# 2026-04-01 14:00:47.002221
++n
+
+# 2026-04-01 14:02:50.784470
++/add Core/GameManager.cs Core/RenderManager.cs
+
+# 2026-04-01 14:03:14.913326
++Aider, necesito que integres dos mecánicas nuevas a los archivos que te acabo de agregar. Es vital que NO modifiques la física, ni el movimiento, ni las colisiones en GameManager.cs.
++
++Tarea 1: En GameManager.cs, añade la variable public static bool DevMode = false;. En el método Update, haz que si se presiona KeyboardKey.F9, DevMode cambie. Si DevMode se activa, iguala player.MaxHealth y player.Health a 5000, suma 10000 a GlobalCoins, y pon en true player.HasMachete, player.HasHalls, player.HasWhip y player.HasPuddle.
++
++Tarea 2: En RenderManager.cs, en el método Draw, si DevMode es true, dibuja el texto 'DEV MODE ON' en la pantalla con color Magenta en una posición visible (por ejemplo, x: 20, y: 20).
++
++Tarea 3: En RenderManager.cs, dentro del modo Story3D (donde se hace el culling por distancia de los enemigos y la cuadrícula del piso), actualiza la lógica de la linterna: calcula el dotProduct entre la dirección frontal del jugador (player.FacingDirection) y la dirección hacia el objetivo (enemigo o nodo del piso). Si el dotProduct es >= 0.866f, la distancia máxima de visión (currentMaxDist) debe ser 400.0f. Si es menor, debe ser 120.0f. Usa este currentMaxDist para calcular el alpha y el límite de visión en lugar de usar 400.0f estático
+
+# 2026-04-01 14:04:54.237186
++exit
+
+# 2026-04-01 14:05:01.870936
++/exit
+
+# 2026-04-01 14:05:13.854661
++n
+
+# 2026-04-01 14:05:26.344234
++d
+
+# 2026-04-01 14:05:34.344983
++/add Core/GameManager.cs Core/RenderManager.cs
+
+# 2026-04-01 14:06:08.502363
++Aider, necesito que integres dos mecánicas nuevas a los archivos que te acabo de agregar. Es vital que NO modifiques la física, ni el movimiento, ni las colisiones en GameManager.cs.
++
++Tarea 1: En GameManager.cs, añade la variable public static bool DevMode = false;. En el método Update, haz que si se presiona KeyboardKey.F9, DevMode cambie. Si DevMode se activa, iguala player.MaxHealth y player.Health a 5000, suma 10000 a GlobalCoins, y pon en true player.HasMachete, player.HasHalls, player.HasWhip y player.HasPuddle.
++
++Tarea 2: En RenderManager.cs, en el método Draw, si DevMode es true, dibuja el texto 'DEV MODE ON' en la pantalla con color Magenta en una posición visible (por ejemplo, x: 20, y: 20).
++
++Tarea 3: En RenderManager.cs, dentro del modo Story3D (donde se hace el culling por distancia de los enemigos y la cuadrícula del piso), actualiza la lógica de la linterna: calcula el dotProduct entre la dirección frontal del jugador (player.FacingDirection) y la dirección hacia el objetivo (enemigo o nodo del piso). Si el dotProduct es >= 0.866f, la distancia máxima de visión (currentMaxDist) debe ser 400.0f. Si es menor, debe ser 120.0f. Usa este currentMaxDist para calcular el alpha y el límite de visión en lugar de usar 400.0f estático.
+
+# 2026-04-01 14:06:23.642523
++/exit
