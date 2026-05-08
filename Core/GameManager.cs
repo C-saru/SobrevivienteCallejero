@@ -12,6 +12,8 @@ namespace VampireSurvivorsClone
         public static bool UseStaticSprites = true;
         public static ILevel CurrentLevel = null!;
         public static float GameTime = 0.0f;
+        public static float MenuTime = 0.0f;
+        public static float GameOverTimer = 0.0f;
         public static float spawnTimer = 0.0f;
         public static float spawnInterval = 2.0f;
         public static Random random = new Random();
@@ -47,6 +49,7 @@ namespace VampireSurvivorsClone
             LoadGame();
             State = GameState.StartMenu;
             GameTime = 0.0f;
+            GameOverTimer = 0.0f;
             spawnTimer = 0.0f;
             spawnInterval = 2.0f;
             BossSpawned = false;
@@ -172,8 +175,7 @@ namespace VampireSurvivorsClone
         public static void Update(float deltaTime, ref Player player, ref Camera2D camera, int screenWidth, int screenHeight)
         {
             // Dificultad Dinámica
-            if (Raylib.IsKeyPressed(KeyboardKey.KpAdd)) DifficultyMultiplier += 0.1f;
-            if (Raylib.IsKeyPressed(KeyboardKey.KpSubtract)) DifficultyMultiplier = Math.Max(0.1f, DifficultyMultiplier - 0.1f);
+            DifficultyMultiplier = 1.0f + (GameTime / 60.0f) * 0.4f;
 
             // Tecla de Salida / Pausa
             if (Raylib.IsKeyPressed(KeyboardKey.Escape))
@@ -208,6 +210,7 @@ namespace VampireSurvivorsClone
 
             if (State == GameState.StartMenu)
             {
+                MenuTime += deltaTime;
                 if (Raylib.IsKeyPressed(KeyboardKey.F)) { UseStaticSprites = !UseStaticSprites; }
 
                 if (Raylib.IsKeyPressed(KeyboardKey.M)) 
@@ -310,10 +313,22 @@ namespace VampireSurvivorsClone
             }
             else if (State == GameState.GameOver || State == GameState.GameWon)
             {
-                if (Raylib.IsKeyPressed(KeyboardKey.Enter))
+                if (State == GameState.GameOver)
                 {
-                    SaveGame();
-                    ResetGame(ref player);
+                    GameOverTimer += deltaTime;
+                    if (GameOverTimer >= 2.0f && Raylib.IsKeyPressed(KeyboardKey.Enter))
+                    {
+                        SaveGame();
+                        ResetGame(ref player);
+                    }
+                }
+                else
+                {
+                    if (Raylib.IsKeyPressed(KeyboardKey.Enter))
+                    {
+                        SaveGame();
+                        ResetGame(ref player);
+                    }
                 }
             }
             else if (State == GameState.StoreMenu)

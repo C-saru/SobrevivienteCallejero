@@ -14,8 +14,14 @@ namespace VampireSurvivorsClone
             if (GameManager.State == GameState.StartMenu)
             {
                 if (menuBg.Id != 0) Raylib.DrawTexturePro(menuBg, new Rectangle(0, 0, menuBg.Width, menuBg.Height), new Rectangle(0, 0, screenWidth, screenHeight), Vector2.Zero, 0.0f, Color.White);
-                Raylib.DrawText("SOBREVIVIENTE CALLEJERO", screenWidth / 2 - 250, screenHeight / 2 - 100, 40, Color.Gold);
-                Raylib.DrawText("Presiona ENTER para Empezar", screenWidth / 2 - 180, screenHeight / 2, 20, Color.White);
+
+                int titleYOffset = (int)(Math.Sin(GameManager.MenuTime * 2.0f) * 10.0f);
+                Raylib.DrawText("SOBREVIVIENTE CALLEJERO", screenWidth / 2 - 250, screenHeight / 2 - 100 + titleYOffset, 40, Color.Gold);
+
+                int startAlpha = (int)(127 + 128 * Math.Cos(GameManager.MenuTime * 3.0f));
+                Color startTextColor = new Color(255, 255, 255, startAlpha);
+                Raylib.DrawText("Presiona ENTER para Empezar", screenWidth / 2 - 180, screenHeight / 2, 20, startTextColor);
+
                 Raylib.DrawText("Controles: WASD/Flechas para mover, ESPACIO para disparar", screenWidth / 2 - 280, screenHeight / 2 + 50, 20, Color.Gray);
                 Raylib.DrawText("Presiona 'T' para ir al Puesto de Mejoras", screenWidth / 2 - 200, screenHeight / 2 + 100, 20, Color.SkyBlue);
                 Raylib.DrawText("Presiona 'M' para cambiar de Modo", screenWidth / 2 - 200, screenHeight / 2 + 130, 20, Color.Orange);
@@ -510,9 +516,16 @@ namespace VampireSurvivorsClone
                 }
                 else if (GameManager.State == GameState.GameOver)
                 {
-                    Raylib.DrawRectangle(0, 0, screenWidth, screenHeight, new Color(0, 0, 0, 200));
-                    Raylib.DrawText("GAME OVER", screenWidth / 2 - 150, screenHeight / 2 - 50, 50, Color.Red);
-                    Raylib.DrawText("Presiona ENTER para reiniciar", screenWidth / 2 - 180, screenHeight / 2 + 20, 20, Color.White);
+                    float alphaPct = Math.Min(GameManager.GameOverTimer / 2.0f, 1.0f);
+                    int redAlpha = (int)(200 * alphaPct);
+                    Raylib.DrawRectangle(0, 0, screenWidth, screenHeight, new Color(150, 0, 0, redAlpha));
+
+                    if (GameManager.GameOverTimer >= 2.0f)
+                    {
+                        Raylib.DrawRectangle(0, 0, screenWidth, screenHeight, new Color(0, 0, 0, 150));
+                        Raylib.DrawText("GAME OVER", screenWidth / 2 - 150, screenHeight / 2 - 50, 50, Color.Red);
+                        Raylib.DrawText("Presiona ENTER para reiniciar", screenWidth / 2 - 180, screenHeight / 2 + 20, 20, Color.White);
+                    }
                 }
                 else if (GameManager.State == GameState.GameWon)
                 {

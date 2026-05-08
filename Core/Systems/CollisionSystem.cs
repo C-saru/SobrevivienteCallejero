@@ -247,6 +247,7 @@ namespace VampireSurvivorsClone
                                 if (player.Health <= 0)
                                 {
                                     GameManager.State = GameState.GameOver;
+                                    GameManager.GameOverTimer = 0.0f;
                                 }
                             }
                         }
