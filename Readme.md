@@ -5,10 +5,12 @@ Un clon de Vampire Survivors con arquitectura Data-Oriented Design (DOD) en C#, 
 ## Requisitos Previos
 
 Para compilar y correr este juego desde la terminal, necesitas instalar:
+**Para Linux (Ubuntu):**
+* Abre la terminal y ejecuta: `sudo apt-get install -y dotnet-sdk-8.0`
 
-1. **.NET 8.0 SDK**: El framework base del proyecto. En Ubuntu, puedes instalarlo con `sudo apt-get install -y dotnet-sdk-8.0`.
-2. **Raylib-cs (v6.0.0)**: La librería gráfica y de audio. Se descarga automáticamente al compilar porque ya está definida en el archivo `.csproj`.
-
+**Para Windows:**
+* Descarga el instalador del ".NET 8.0 SDK" desde la página oficial de Microsoft (https://dotnet.microsoft.com/download/dotnet/8.0) e instálalo con "Siguiente > Siguiente".
+* Alternativamente, si usas Windows 11, puedes abrir PowerShell y ejecutar: `winget install Microsoft.DotNet.SDK.8`
 ## Estructura de Assets Requerida
 
 El juego requiere una carpeta `Assets/` en el directorio raíz con los siguientes archivos multimedia para poder iniciar sin errores:
@@ -18,6 +20,6 @@ El juego requiere una carpeta `Assets/` en el directorio raíz con los siguiente
 
 ## Cómo Jugar
 
-Clona el repositorio, abre la terminal en la carpeta del proyecto y ejecuta:
+Clona el repositorio, abre la terminal (o PowerShell en Windows) en la carpeta del proyecto y ejecuta:
 
 `dotnet run`
