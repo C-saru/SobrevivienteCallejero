@@ -238,15 +238,14 @@ namespace VampireSurvivorsClone
                     int endY = (int)(player.Position.Y + viewRadius) / tileSize * tileSize;
 
                     // --- NUEVA LÓGICA DE LINTERNA PARA EL PISO ---
-                    Color floorColor = new Color(0, 100, 0, 255);
-                    if (GameManager.DifficultyMultiplier >= 3.0f) floorColor = Color.Red;
-                    else if (GameManager.DifficultyMultiplier >= 2.0f) floorColor = Color.Orange;
+                    Color baseFloorColor = new Color(30, 30, 30, 255);
 
                     for (int x = startX; x <= endX; x += tileSize)
                     {
                         for (int y = startY; y <= endY; y += tileSize)
                         {
-                            Vector2 targetPos = new Vector2(x, y);
+                            // Center of the current tile
+                            Vector2 targetPos = new Vector2(x + tileSize / 2.0f, y + tileSize / 2.0f);
                             float dist = Vector2.Distance(player.Position, targetPos);
                             
                             float dotProduct = dist > 0 ? Vector2.Dot(lookDir, (targetPos - player.Position) / dist) : 1.0f;
@@ -255,9 +254,16 @@ namespace VampireSurvivorsClone
                             if (dist < currentMaxDist)
                             {
                                 float alpha = 1.0f - (dist / currentMaxDist);
-                                Color finalLineColor = new Color(floorColor.R, floorColor.G, floorColor.B, (byte)(255 * alpha));
-                                Raylib.DrawLine3D(new Vector3(x, 0, y), new Vector3(x + tileSize, 0, y), finalLineColor);
-                                Raylib.DrawLine3D(new Vector3(x, 0, y), new Vector3(x, 0, y + tileSize), finalLineColor);
+                                // Modulate the color by alpha (fade out with distance), keeping the alpha channel at 255
+                                Color finalFloorColor = new Color(
+                                    (int)(baseFloorColor.R * alpha),
+                                    (int)(baseFloorColor.G * alpha),
+                                    (int)(baseFloorColor.B * alpha),
+                                    255
+                                );
+
+                                // Draw flattened cube for the floor tile
+                                Raylib.DrawCube(new Vector3(targetPos.X, 0, targetPos.Y), tileSize, 0.1f, tileSize, finalFloorColor);
                             }
                         }
                     }
