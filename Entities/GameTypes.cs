@@ -137,4 +137,15 @@ namespace VampireSurvivorsClone
         public float Radius;
         public float LifeTime;
     }
+
+    public struct Particle
+    {
+        public Vector2 Position;
+        public Vector2 Velocity;
+        public Color Color;
+        public float Size;
+        public float LifeTime;
+        public float MaxLifeTime;
+        public bool IsActive;
+    }
 }

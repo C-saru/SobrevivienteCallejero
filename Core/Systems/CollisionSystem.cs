@@ -260,6 +260,18 @@ namespace VampireSurvivorsClone
             if (GameManager.enemies[index].Health <= 0)
             {
                 GameManager.enemies[index].IsActive = false;
+
+                // Efecto de Partículas al morir (sangre/polvo)
+                Color deathColor = GameManager.enemies[index].Type == 3 ? Color.Purple : Color.Red;
+                if (GameManager.enemies[index].Type == 8) deathColor = Color.DarkGray; // Camionetica
+                GameManager.SpawnParticles(GameManager.enemies[index].Position, deathColor, 15);
+
+                // Hit-Stop para Jefes o Mini-Jefes
+                if (GameManager.enemies[index].Type == 3 || GameManager.enemies[index].Type == 1 || GameManager.enemies[index].Type == 2)
+                {
+                    GameManager.HitStopTimer = 0.15f;
+                }
+
                 // La recompensa ahora escala con la dificultad
                 int baseValue = GameManager.enemies[index].Type == 3 ? 10 : (GameManager.enemies[index].Type == 2 ? 5 : 1);
                 int scaledValue = (int)(baseValue * GameManager.DifficultyMultiplier);

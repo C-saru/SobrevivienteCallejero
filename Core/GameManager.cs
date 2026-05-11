@@ -26,11 +26,14 @@ namespace VampireSurvivorsClone
         public static DamageText[] damageTexts = new DamageText[100];
         public static Obstacle[] obstacles = new Obstacle[30];
         public static Pickup[] pickups = new Pickup[50];
+        public static Particle[] particles = new Particle[1000];
 
         public static float HitStopTimer = 0.0f;
         public static float DrunkTimer = 0.0f;
         public static int GlobalCoins = 0;
         public static int BonusHealth = 0;
+        public static int BonusSpeed = 0;
+        public static int BonusDamage = 0;
 
         public static Upgrade[] currentUpgrades = new Upgrade[3];
         public static Rectangle MapBounds = new Rectangle(-1500, -1500, 3000, 3000);
@@ -39,8 +42,8 @@ namespace VampireSurvivorsClone
     public static bool BossAcosoMode = false;
     public static float BossRespawnTimer = 0.0f;
 
-    public static void SaveGame() { File.WriteAllText("save.txt", $"{GlobalCoins},{BonusHealth}"); }
-    public static void LoadGame() { if (File.Exists("save.txt")) { var data = File.ReadAllText("save.txt").Split(','); GlobalCoins = int.Parse(data[0]); BonusHealth = int.Parse(data[1]); } }
+    public static void SaveGame() { File.WriteAllText("save.txt", $"{GlobalCoins},{BonusHealth},{BonusSpeed},{BonusDamage}"); }
+    public static void LoadGame() { if (File.Exists("save.txt")) { var data = File.ReadAllText("save.txt").Split(','); GlobalCoins = int.Parse(data[0]); BonusHealth = int.Parse(data[1]); if(data.Length > 2) BonusSpeed = int.Parse(data[2]); if(data.Length > 3) BonusDamage = int.Parse(data[3]); } }
 
     public static void ResetGame(ref Player player)
         {
@@ -50,6 +53,7 @@ namespace VampireSurvivorsClone
             spawnTimer = 0.0f;
             spawnInterval = 2.0f;
             BossSpawned = false;
+            Level1_Parking.IsDarknessEvent = false;
 
             player.Position = new Vector2(0, 0);
             player.Size = 30.0f;
@@ -60,11 +64,11 @@ namespace VampireSurvivorsClone
             player.XP = 0;
             player.MaxXP = 10;
             player.Level = 1;
-            player.Speed = 150.0f;
+            player.Speed = 150.0f + BonusSpeed;
             player.SpeedMult = 1.0f;
             player.MacheteCooldownMult = 1.0f;
             player.MagnetMult = 1.0f;
-            player.WhipDamageMult = 1.0f;
+            player.WhipDamageMult = 1.0f + (BonusDamage * 0.1f);
             player.PickupRadius = 60.0f;
             player.HasPiedrazo = true;
             player.HasMachete = false;
@@ -89,6 +93,30 @@ namespace VampireSurvivorsClone
             for (int i = 0; i < damageTexts.Length; i++) damageTexts[i].IsActive = false;
             for (int i = 0; i < obstacles.Length; i++) obstacles[i].IsActive = false;
             for (int i = 0; i < pickups.Length; i++) pickups[i].IsActive = false;
+            for (int i = 0; i < particles.Length; i++) particles[i].IsActive = false;
+        }
+
+        public static void SpawnParticles(Vector2 pos, Color color, int count)
+        {
+            for (int k = 0; k < count; k++)
+            {
+                for (int i = 0; i < particles.Length; i++)
+                {
+                    if (!particles[i].IsActive)
+                    {
+                        particles[i].IsActive = true;
+                        particles[i].Position = pos;
+                        float angle = (float)(random.NextDouble() * Math.PI * 2);
+                        float speed = random.Next(50, 200);
+                        particles[i].Velocity = new Vector2((float)Math.Cos(angle), (float)Math.Sin(angle)) * speed;
+                        particles[i].Color = color;
+                        particles[i].Size = random.Next(3, 8);
+                        particles[i].MaxLifeTime = (float)(random.NextDouble() * 0.5 + 0.2);
+                        particles[i].LifeTime = particles[i].MaxLifeTime;
+                        break;
+                    }
+                }
+            }
         }
 
         public static void SpawnPickup(Vector2 pos)
@@ -269,10 +297,30 @@ namespace VampireSurvivorsClone
                     if (damageTexts[i].IsActive)
                     {
                         damageTexts[i].LifeTime -= deltaTime;
-                        damageTexts[i].Position.Y -= 50.0f * deltaTime;
+                        // Hacemos que flote hacia arriba y un poco hacia un lado (movimiento pseudo-físico ligero)
+                        damageTexts[i].Position.Y -= 60.0f * deltaTime;
+                        damageTexts[i].Position.X += (float)Math.Sin(GameTime * 10f + i) * 10f * deltaTime;
+
                         if (damageTexts[i].LifeTime <= 0)
                         {
                             damageTexts[i].IsActive = false;
+                        }
+                    }
+                }
+
+                for (int i = 0; i < particles.Length; i++)
+                {
+                    if (particles[i].IsActive)
+                    {
+                        particles[i].LifeTime -= deltaTime;
+                        if (particles[i].LifeTime <= 0)
+                        {
+                            particles[i].IsActive = false;
+                        }
+                        else
+                        {
+                            particles[i].Position += particles[i].Velocity * deltaTime;
+                            particles[i].Velocity *= 0.95f; // Fricción
                         }
                     }
                 }
@@ -318,7 +366,9 @@ namespace VampireSurvivorsClone
             }
             else if (State == GameState.StoreMenu)
             {
-                if (Raylib.IsKeyPressed(KeyboardKey.One) && GlobalCoins >= 50) { GlobalCoins -= 50; BonusHealth += 10; SaveGame(); }
+                if (Raylib.IsKeyPressed(KeyboardKey.One) && GlobalCoins >= 50) { GlobalCoins -= 50; BonusHealth += 20; SaveGame(); }
+                if (Raylib.IsKeyPressed(KeyboardKey.Two) && GlobalCoins >= 100) { GlobalCoins -= 100; BonusSpeed += 15; SaveGame(); }
+                if (Raylib.IsKeyPressed(KeyboardKey.Three) && GlobalCoins >= 150) { GlobalCoins -= 150; BonusDamage += 1; SaveGame(); }
                 if (Raylib.IsKeyPressed(KeyboardKey.Escape)) State = GameState.StartMenu;
             }
         }
