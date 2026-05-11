@@ -260,6 +260,7 @@ namespace VampireSurvivorsClone
             if (GameManager.enemies[index].Health <= 0)
             {
                 GameManager.enemies[index].IsActive = false;
+                GameManager.SpawnParticles(GameManager.enemies[index].Position, GameManager.random.Next(10, 16), Raylib_cs.Color.Red);
                 // La recompensa ahora escala con la dificultad
                 int baseValue = GameManager.enemies[index].Type == 3 ? 10 : (GameManager.enemies[index].Type == 2 ? 5 : 1);
                 int scaledValue = (int)(baseValue * GameManager.DifficultyMultiplier);

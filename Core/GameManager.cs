@@ -29,18 +29,44 @@ namespace VampireSurvivorsClone
 
         public static float HitStopTimer = 0.0f;
         public static float DrunkTimer = 0.0f;
+        public static Particle[] particles = new Particle[1000];
         public static int GlobalCoins = 0;
         public static int BonusHealth = 0;
+        public static int BonusSpeed = 0;
+        public static int BonusMagnet = 0;
 
         public static Upgrade[] currentUpgrades = new Upgrade[3];
         public static Rectangle MapBounds = new Rectangle(-1500, -1500, 3000, 3000);
         public static bool DevMode = false;
+        public static float BaseDifficulty = 1.0f;
     public static float DifficultyMultiplier = 1.0f;
     public static bool BossAcosoMode = false;
     public static float BossRespawnTimer = 0.0f;
 
-    public static void SaveGame() { File.WriteAllText("save.txt", $"{GlobalCoins},{BonusHealth}"); }
-    public static void LoadGame() { if (File.Exists("save.txt")) { var data = File.ReadAllText("save.txt").Split(','); GlobalCoins = int.Parse(data[0]); BonusHealth = int.Parse(data[1]); } }
+    public static void SaveGame() { File.WriteAllText("save.txt", $"{GlobalCoins},{BonusHealth},{BonusSpeed},{BonusMagnet}"); }
+    public static void LoadGame() { if (File.Exists("save.txt")) { var data = File.ReadAllText("save.txt").Split(','); GlobalCoins = int.Parse(data[0]); BonusHealth = int.Parse(data[1]); if (data.Length > 2) { BonusSpeed = int.Parse(data[2]); BonusMagnet = int.Parse(data[3]); } } }
+
+    public static void SpawnParticles(Vector2 pos, int count, Color color)
+    {
+        for (int i = 0; i < count; i++)
+        {
+            for (int j = 0; j < particles.Length; j++)
+            {
+                if (!particles[j].IsActive)
+                {
+                    particles[j].IsActive = true;
+                    particles[j].Position = pos;
+                    float angle = (float)(random.NextDouble() * Math.PI * 2);
+                    float speed = random.Next(50, 201);
+                    particles[j].Velocity = new Vector2((float)Math.Cos(angle), (float)Math.Sin(angle)) * speed;
+                    particles[j].Color = color;
+                    particles[j].LifeTime = (float)(0.2 + random.NextDouble() * 0.6);
+                    particles[j].Size = random.Next(2, 6);
+                    break;
+                }
+            }
+        }
+    }
 
     public static void ResetGame(ref Player player)
         {
@@ -60,12 +86,12 @@ namespace VampireSurvivorsClone
             player.XP = 0;
             player.MaxXP = 10;
             player.Level = 1;
-            player.Speed = 150.0f;
+            player.Speed = 150.0f + BonusSpeed;
             player.SpeedMult = 1.0f;
             player.MacheteCooldownMult = 1.0f;
             player.MagnetMult = 1.0f;
             player.WhipDamageMult = 1.0f;
-            player.PickupRadius = 60.0f;
+            player.PickupRadius = 60.0f + BonusMagnet;
             player.HasPiedrazo = true;
             player.HasMachete = false;
             player.HasHalls = false;
@@ -172,8 +198,9 @@ namespace VampireSurvivorsClone
         public static void Update(float deltaTime, ref Player player, ref Camera2D camera, int screenWidth, int screenHeight)
         {
             // Dificultad Dinámica
-            if (Raylib.IsKeyPressed(KeyboardKey.KpAdd)) DifficultyMultiplier += 0.1f;
-            if (Raylib.IsKeyPressed(KeyboardKey.KpSubtract)) DifficultyMultiplier = Math.Max(0.1f, DifficultyMultiplier - 0.1f);
+            if (Raylib.IsKeyPressed(KeyboardKey.KpAdd)) BaseDifficulty += 0.1f;
+            if (Raylib.IsKeyPressed(KeyboardKey.KpSubtract)) BaseDifficulty = Math.Max(0.1f, BaseDifficulty - 0.1f);
+            DifficultyMultiplier = Math.Max(0.1f, BaseDifficulty + (GameTime / 60.0f) * 0.4f);
 
             // Tecla de Salida / Pausa
             if (Raylib.IsKeyPressed(KeyboardKey.Escape))
@@ -225,6 +252,19 @@ namespace VampireSurvivorsClone
             }
             else if (State == GameState.Playing)
             {
+                for (int i = 0; i < particles.Length; i++)
+                {
+                    if (particles[i].IsActive)
+                    {
+                        particles[i].Position += particles[i].Velocity * deltaTime;
+                        particles[i].LifeTime -= deltaTime;
+                        if (particles[i].LifeTime <= 0)
+                        {
+                            particles[i].IsActive = false;
+                        }
+                    }
+                }
+
                 GameTime += deltaTime;
 
                 if (HitStopTimer > 0) { HitStopTimer -= deltaTime; return; }
@@ -319,6 +359,8 @@ namespace VampireSurvivorsClone
             else if (State == GameState.StoreMenu)
             {
                 if (Raylib.IsKeyPressed(KeyboardKey.One) && GlobalCoins >= 50) { GlobalCoins -= 50; BonusHealth += 10; SaveGame(); }
+                if (Raylib.IsKeyPressed(KeyboardKey.Two) && GlobalCoins >= 100) { GlobalCoins -= 100; BonusSpeed += 5; SaveGame(); }
+                if (Raylib.IsKeyPressed(KeyboardKey.Three) && GlobalCoins >= 100) { GlobalCoins -= 100; BonusMagnet += 5; SaveGame(); }
                 if (Raylib.IsKeyPressed(KeyboardKey.Escape)) State = GameState.StartMenu;
             }
         }

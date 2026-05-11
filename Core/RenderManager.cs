@@ -220,6 +220,14 @@ namespace VampireSurvivorsClone
                             Raylib.DrawText(GameManager.damageTexts[i].Value.ToString(), (int)GameManager.damageTexts[i].Position.X, (int)GameManager.damageTexts[i].Position.Y, 20, Color.Red);
                     }
 
+                    for (int i = 0; i < GameManager.particles.Length; i++)
+                    {
+                        if (GameManager.particles[i].IsActive)
+                        {
+                            Raylib.DrawRectangle((int)GameManager.particles[i].Position.X, (int)GameManager.particles[i].Position.Y, (int)GameManager.particles[i].Size, (int)GameManager.particles[i].Size, GameManager.particles[i].Color);
+                        }
+                    }
+
                     Raylib.EndMode2D();
                 }
                 else if (GameManager.CurrentMode == GameMode.Story3D)
@@ -238,15 +246,14 @@ namespace VampireSurvivorsClone
                     int endY = (int)(player.Position.Y + viewRadius) / tileSize * tileSize;
 
                     // --- NUEVA LÓGICA DE LINTERNA PARA EL PISO ---
-                    Color floorColor = new Color(0, 100, 0, 255);
-                    if (GameManager.DifficultyMultiplier >= 3.0f) floorColor = Color.Red;
-                    else if (GameManager.DifficultyMultiplier >= 2.0f) floorColor = Color.Orange;
+                    Color baseFloorColor = new Color(30, 30, 30, 255);
 
                     for (int x = startX; x <= endX; x += tileSize)
                     {
                         for (int y = startY; y <= endY; y += tileSize)
                         {
-                            Vector2 targetPos = new Vector2(x, y);
+                            // Center of the current tile
+                            Vector2 targetPos = new Vector2(x + tileSize / 2.0f, y + tileSize / 2.0f);
                             float dist = Vector2.Distance(player.Position, targetPos);
                             
                             float dotProduct = dist > 0 ? Vector2.Dot(lookDir, (targetPos - player.Position) / dist) : 1.0f;
@@ -255,9 +262,16 @@ namespace VampireSurvivorsClone
                             if (dist < currentMaxDist)
                             {
                                 float alpha = 1.0f - (dist / currentMaxDist);
-                                Color finalLineColor = new Color(floorColor.R, floorColor.G, floorColor.B, (byte)(255 * alpha));
-                                Raylib.DrawLine3D(new Vector3(x, 0, y), new Vector3(x + tileSize, 0, y), finalLineColor);
-                                Raylib.DrawLine3D(new Vector3(x, 0, y), new Vector3(x, 0, y + tileSize), finalLineColor);
+                                // Modulate the color by alpha (fade out with distance), keeping the alpha channel at 255
+                                Color finalFloorColor = new Color(
+                                    (int)(baseFloorColor.R * alpha),
+                                    (int)(baseFloorColor.G * alpha),
+                                    (int)(baseFloorColor.B * alpha),
+                                    255
+                                );
+
+                                // Draw flattened cube for the floor tile
+                                Raylib.DrawCube(new Vector3(targetPos.X, 0, targetPos.Y), tileSize, 0.1f, tileSize, finalFloorColor);
                             }
                         }
                     }
@@ -366,6 +380,14 @@ namespace VampireSurvivorsClone
                     Raylib.DrawCube(new Vector3(bounds.X + bounds.Width / 2, wallHeight / 2, bounds.Y + bounds.Height + wallThickness / 2), bounds.Width + wallThickness * 2, wallHeight, wallThickness, Color.DarkGray); // Sur
                     Raylib.DrawCube(new Vector3(bounds.X + bounds.Width + wallThickness / 2, wallHeight / 2, bounds.Y + bounds.Height / 2), wallThickness, wallHeight, bounds.Height, Color.DarkGray); // Este
                     Raylib.DrawCube(new Vector3(bounds.X - wallThickness / 2, wallHeight / 2, bounds.Y + bounds.Height / 2), wallThickness, wallHeight, bounds.Height, Color.DarkGray); // Oeste
+
+                    for (int i = 0; i < GameManager.particles.Length; i++)
+                    {
+                        if (GameManager.particles[i].IsActive)
+                        {
+                            Raylib.DrawCube(new Vector3(GameManager.particles[i].Position.X, 1.0f, GameManager.particles[i].Position.Y), GameManager.particles[i].Size, GameManager.particles[i].Size, GameManager.particles[i].Size, GameManager.particles[i].Color);
+                        }
+                    }
 
                     Raylib.EndMode3D();
                     DrawRadar(camera3D, screenWidth, GameManager.enemies);
@@ -522,6 +544,8 @@ namespace VampireSurvivorsClone
                 Raylib.DrawText("PUESTO DE DULCES Y BISUTERÍA", screenWidth / 2 - 250, 50, 30, Color.Gold);
                 Raylib.DrawText("Monedas Disponibles: " + GameManager.GlobalCoins, screenWidth / 2 - 150, 120, 20, Color.White);
                 Raylib.DrawText("1. Comprar Paquete de Caramelos (+10 Vida Máxima Inicial) - 50 Monedas", screenWidth / 2 - 350, 200, 20, Color.Yellow);
+                Raylib.DrawText("2. Comprar Zapatos de Goma (+5 Velocidad Base) - 100 Monedas", screenWidth / 2 - 350, 240, 20, Color.Yellow);
+                Raylib.DrawText("3. Comprar Imán de Nevera (+5 Radio Imán Base) - 100 Monedas", screenWidth / 2 - 350, 280, 20, Color.Yellow);
                 Raylib.DrawText("Presiona ESC para volver al menú", screenWidth / 2 - 180, screenHeight - 50, 20, Color.Gray);
             }
 
