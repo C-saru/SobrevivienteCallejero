@@ -9,6 +9,7 @@ namespace VampireSurvivorsClone
         public Rectangle Bounds { get; } = new Rectangle(-1500, -1500, 3000, 3000);
         private bool event60sFired = false; 
         private bool event120sFired = false;
+        private float horaPicoTimer = 0.0f;
 
         public void Initialize()
         {
@@ -67,8 +68,34 @@ namespace VampireSurvivorsClone
                 }
             }
 
-            if (gameTime >= 60.0f && !event60sFired) { event60sFired = true; SpawnCircleWave(player.Position, 6, 20, 400.0f); }
-            if (gameTime >= 120.0f && !event120sFired) { event120sFired = true; SpawnCircleWave(player.Position, 8, 12, 600.0f); }
+            if (gameTime >= 60.0f && gameTime < 70.0f)
+            {
+                if (!event60sFired)
+                {
+                    event60sFired = true;
+                    SpawnCircleWave(player.Position, 4, 15, 400.0f);
+                }
+            }
+
+            if (gameTime >= 120.0f && !event120sFired)
+            {
+                event120sFired = true;
+                SpawnBoss(player.Position, 2, 3.0f);
+            }
+
+            if (gameTime >= 180.0f && gameTime <= 210.0f)
+            {
+                horaPicoTimer -= deltaTime;
+                if (horaPicoTimer <= 0)
+                {
+                    horaPicoTimer = 5.0f;
+                    int count = GameManager.random.Next(2, 4);
+                    for (int i = 0; i < count; i++)
+                    {
+                        SpawnHoraPico(player.Position);
+                    }
+                }
+            }
         }
 
         public void DrawBackground()
@@ -166,7 +193,7 @@ namespace VampireSurvivorsClone
             }
         }
 
-        private void SpawnBoss(Vector2 playerPosition)
+        private void SpawnBoss(Vector2 playerPosition, int type = 3, float healthMultiplier = 1.0f)
         {
             for (int i = 0; i < GameManager.enemies.Length; i++)
             {
@@ -178,11 +205,16 @@ namespace VampireSurvivorsClone
                     GameManager.enemies[i].DashTimer = 0.0f;
                     GameManager.enemies[i].IsDashing = false;
                     GameManager.enemies[i].StateTimer = 0.0f;
+                    GameManager.enemies[i].IsHoraPico = false;
+                    GameManager.enemies[i].IsBoss = false;
+
+                    if (type == 3) GameManager.enemies[i].IsBoss = true;
+                    if (type == 2 && GameManager.IsStoryMode) GameManager.enemies[i].IsBoss = true;
                     
-                    GameManager.enemies[i].Type = 3; // Jefe
-                    GameManager.enemies[i].Size = GameConfig.Enemies[3].Size;
-                    GameManager.enemies[i].BaseSpeed = GameConfig.Enemies[3].BaseSpeed;
-                    GameManager.enemies[i].Health = GameConfig.Enemies[3].Health;
+                    GameManager.enemies[i].Type = type;
+                    GameManager.enemies[i].Size = GameConfig.Enemies[type].Size;
+                    GameManager.enemies[i].BaseSpeed = GameConfig.Enemies[type].BaseSpeed;
+                    GameManager.enemies[i].Health = GameConfig.Enemies[type].Health * healthMultiplier;
 
                     float angle = (float)(GameManager.random.NextDouble() * Math.PI * 2);
                     float distance = 1000.0f; // Aparece un poco más lejos
@@ -194,6 +226,40 @@ namespace VampireSurvivorsClone
                     spawnPos.Y = Math.Clamp(spawnPos.Y, Bounds.Y, Bounds.Y + Bounds.Height - GameManager.enemies[i].Size);
 
                     GameManager.enemies[i].Position = spawnPos;
+                    break;
+                }
+            }
+        }
+
+        private void SpawnHoraPico(Vector2 playerPosition)
+        {
+            for (int i = 0; i < GameManager.enemies.Length; i++)
+            {
+                if (!GameManager.enemies[i].IsActive)
+                {
+                    GameManager.enemies[i].IsActive = true;
+                    GameManager.enemies[i].InvincibilityTimer = 0.0f;
+                    GameManager.enemies[i].FreezeTimer = 0.0f;
+                    GameManager.enemies[i].DashTimer = 0.0f;
+                    GameManager.enemies[i].IsDashing = false;
+                    GameManager.enemies[i].StateTimer = 0.0f;
+                    GameManager.enemies[i].IsHoraPico = true;
+
+                    int type = 8;
+                    GameManager.enemies[i].Type = type;
+                    GameManager.enemies[i].Size = GameConfig.Enemies[type].Size;
+                    GameManager.enemies[i].BaseSpeed = GameConfig.Enemies[type].BaseSpeed * 2.0f;
+                    GameManager.enemies[i].Health = GameConfig.Enemies[type].Health;
+
+                    float angle = (float)(GameManager.random.NextDouble() * Math.PI * 2);
+                    float distance = 1000.0f;
+
+                    Vector2 spawnPos = playerPosition + new Vector2((float)Math.Cos(angle), (float)Math.Sin(angle)) * distance;
+                    Vector2 destPos = playerPosition - new Vector2((float)Math.Cos(angle), (float)Math.Sin(angle)) * distance;
+
+                    GameManager.enemies[i].Position = spawnPos;
+                    // Pre-calculate dash direction so they go in a straight line crossing the screen
+                    GameManager.enemies[i].DashDirection = Vector2.Normalize(destPos - spawnPos);
                     break;
                 }
             }

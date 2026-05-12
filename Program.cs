@@ -24,6 +24,13 @@ namespace VampireSurvivorsClone
             Raylib.UnloadImage(playerImage);
 
             Texture2D menuBg = Raylib.LoadTexture("Assets/menu_bg.png");
+
+            Texture2D titleBgTexture = new Texture2D();
+            if (System.IO.File.Exists("Assets/TitleScreen.png"))
+            {
+                titleBgTexture = Raylib.LoadTexture("Assets/TitleScreen.png");
+            }
+
             Texture2D[] enemyTextures = new Texture2D[9];
             for (int i = 0; i < 9; i++) {
                 string path = $"Assets/enemy_{i}.png";
@@ -47,16 +54,17 @@ namespace VampireSurvivorsClone
             camera3D.FovY = 60.0f;
             camera3D.Projection = CameraProjection.Perspective;
 
-            while (!Raylib.WindowShouldClose())
+            while (!Raylib.WindowShouldClose() && !GameManager.QuitGame)
             {
                 float deltaTime = Raylib.GetFrameTime();
                 GameManager.Update(deltaTime, ref player, ref camera, screenWidth, screenHeight);
-                RenderManager.Draw(ref player, ref camera, ref camera3D, ref playerTexture, ref menuBg, enemyTextures, ref bgTexture, screenWidth, screenHeight);
+                RenderManager.Draw(ref player, ref camera, ref camera3D, ref playerTexture, ref menuBg, ref titleBgTexture, enemyTextures, ref bgTexture, screenWidth, screenHeight);
             }
 
             SoundManager.Unload(); // Libera la memoria de los sonidos
             Raylib.UnloadTexture(playerTexture);
             Raylib.UnloadTexture(menuBg);
+            if (titleBgTexture.Id != 0) Raylib.UnloadTexture(titleBgTexture);
             for (int i = 0; i < 9; i++) { if (enemyTextures[i].Id != 0) Raylib.UnloadTexture(enemyTextures[i]); }
             Raylib.UnloadTexture(bgTexture);
             Raylib.CloseAudioDevice(); // Cierra el dispositivo de audio

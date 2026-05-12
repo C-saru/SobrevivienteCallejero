@@ -13,6 +13,9 @@ namespace VampireSurvivorsClone
         public static ILevel CurrentLevel = null!;
         public static float GameTime = 0.0f;
         public static float spawnTimer = 0.0f;
+        public static int MenuSelection = 0;
+        public static bool QuitGame = false;
+        public static bool IsStoryMode = false;
         public static float spawnInterval = 2.0f;
         public static Random random = new Random();
         public static bool BossSpawned = false;
@@ -71,7 +74,7 @@ namespace VampireSurvivorsClone
     public static void ResetGame(ref Player player)
         {
             LoadGame();
-            State = GameState.StartMenu;
+            State = GameState.MainMenu;
             GameTime = 0.0f;
             spawnTimer = 0.0f;
             spawnInterval = 2.0f;
@@ -205,7 +208,7 @@ namespace VampireSurvivorsClone
             // Tecla de Salida / Pausa
             if (Raylib.IsKeyPressed(KeyboardKey.Escape))
             {
-                if (State == GameState.Playing) State = GameState.StartMenu;
+                if (State == GameState.Playing) State = GameState.MainMenu;
                 Raylib.EnableCursor();
             }
             // Gestión del cursor para el modo FPS
@@ -235,20 +238,59 @@ namespace VampireSurvivorsClone
 
             if (State == GameState.StartMenu)
             {
+                if (Raylib.IsKeyPressed(KeyboardKey.Enter))
+                {
+                    State = GameState.MainMenu;
+                }
+            }
+            else if (State == GameState.MainMenu)
+            {
                 if (Raylib.IsKeyPressed(KeyboardKey.F)) { UseStaticSprites = !UseStaticSprites; }
 
-                if (Raylib.IsKeyPressed(KeyboardKey.M)) 
-                { 
-                    CurrentMode = CurrentMode == GameMode.Arcade2D ? GameMode.Story3D : GameMode.Arcade2D; 
+                if (Raylib.IsKeyPressed(KeyboardKey.Up) || Raylib.IsKeyPressed(KeyboardKey.W))
+                {
+                    MenuSelection--;
+                    if (MenuSelection < 0) MenuSelection = 4;
+                }
+                if (Raylib.IsKeyPressed(KeyboardKey.Down) || Raylib.IsKeyPressed(KeyboardKey.S))
+                {
+                    MenuSelection++;
+                    if (MenuSelection > 4) MenuSelection = 0;
                 }
 
                 if (Raylib.IsKeyPressed(KeyboardKey.Enter))
                 {
-                    State = GameState.Playing;
-                    CurrentLevel = new Level1_Parking();
-                    CurrentLevel.Initialize();
+                    switch (MenuSelection)
+                    {
+                        case 0:
+                            State = GameState.Playing;
+                            CurrentMode = GameMode.Arcade2D;
+                            IsStoryMode = false;
+                            ResetGame(ref player);
+                            State = GameState.Playing; // ResetGame sets to MainMenu
+                            CurrentLevel = new Level1_Parking();
+                            CurrentLevel.Initialize();
+                            break;
+                        case 1:
+                            State = GameState.Playing;
+                            CurrentMode = GameMode.Story3D;
+                            IsStoryMode = true;
+                            ResetGame(ref player);
+                            State = GameState.Playing;
+                            CurrentLevel = new Level1_Parking();
+                            CurrentLevel.Initialize();
+                            break;
+                        case 2:
+                            State = GameState.ChallengesMenu;
+                            break;
+                        case 3:
+                            State = GameState.StoreMenu;
+                            break;
+                        case 4:
+                            QuitGame = true;
+                            break;
+                    }
                 }
-                if (Raylib.IsKeyPressed(KeyboardKey.T)) State = GameState.StoreMenu;
             }
             else if (State == GameState.Playing)
             {
@@ -294,7 +336,12 @@ namespace VampireSurvivorsClone
                 float baseInterval = Math.Max(0.5f, 2.0f - (GameTime / 200.0f));
                 float currentSpawnInterval = baseInterval / Math.Max(0.1f, GameManager.DifficultyMultiplier);
                 spawnTimer += deltaTime;
-                if (spawnTimer >= currentSpawnInterval)
+                // Minuto 1 ('El Matraqueo'): Desactiva el spawn normal por 10 segundos
+                if (GameTime >= 60.0f && GameTime < 70.0f)
+                {
+                    spawnTimer = 0.0f;
+                }
+                else if (spawnTimer >= currentSpawnInterval)
                 {
                     CurrentLevel.SpawnEnemy(player.Position, GameTime);
                     spawnTimer = 0.0f;

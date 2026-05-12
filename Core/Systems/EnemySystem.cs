@@ -12,6 +12,11 @@ namespace VampireSurvivorsClone
             {
                 if (GameManager.enemies[i].IsActive)
                 {
+                    if (GameManager.enemies[i].HitFlashTimer > 0)
+                    {
+                        GameManager.enemies[i].HitFlashTimer -= deltaTime;
+                    }
+
                     if (GameManager.enemies[i].FreezeTimer > 0)
                     {
                         GameManager.enemies[i].FreezeTimer -= deltaTime;
@@ -25,7 +30,14 @@ namespace VampireSurvivorsClone
                         float enemySpeed = GameManager.enemies[i].BaseSpeed;
                         Vector2 movementDir = dirToPlayer;
 
-                        switch (GameManager.enemies[i].Type)
+                        if (GameManager.enemies[i].IsHoraPico)
+                        {
+                            movementDir = GameManager.enemies[i].DashDirection;
+                            enemySpeed = GameManager.enemies[i].BaseSpeed;
+                        }
+                        else
+                        {
+                            switch (GameManager.enemies[i].Type)
                         {
                             case 0: // Normal
                             case 1: // Motorizado
@@ -85,6 +97,7 @@ namespace VampireSurvivorsClone
                                     }
                                 }
                                 break;
+                        }
                         }
 
                         if (GameManager.DrunkTimer > 0) { movementDir = -movementDir; }

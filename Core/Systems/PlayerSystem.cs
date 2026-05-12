@@ -36,6 +36,10 @@ namespace VampireSurvivorsClone
             }
 
             player.Position += dir * currentSpeed * deltaTime;
+            if (dir != Vector2.Zero)
+            {
+                player.HeadBobTimer += deltaTime * player.Speed * 0.05f;
+            }
 
             playerRec.X = player.Position.X;
             playerRec.Y = player.Position.Y;
