@@ -16,6 +16,8 @@ namespace VampireSurvivorsClone
         public static int MenuSelection = 0;
         public static bool QuitGame = false;
         public static bool IsStoryMode = false;
+        public static int ActiveChallenge = 0;
+        public static int ChallengeMenuSelection = 0;
         public static float spawnInterval = 2.0f;
         public static Random random = new Random();
         public static bool BossSpawned = false;
@@ -118,6 +120,12 @@ namespace VampireSurvivorsClone
             for (int i = 0; i < damageTexts.Length; i++) damageTexts[i].IsActive = false;
             for (int i = 0; i < obstacles.Length; i++) obstacles[i].IsActive = false;
             for (int i = 0; i < pickups.Length; i++) pickups[i].IsActive = false;
+
+            if (ActiveChallenge == 1)
+            {
+                player.MaxHealth = 1.0f;
+                player.Health = 1.0f;
+            }
         }
 
         public static void SpawnPickup(Vector2 pos)
@@ -403,12 +411,53 @@ namespace VampireSurvivorsClone
                     ResetGame(ref player);
                 }
             }
+            else if (State == GameState.ChallengesMenu)
+            {
+                if (Raylib.IsKeyPressed(KeyboardKey.Up) || Raylib.IsKeyPressed(KeyboardKey.W))
+                {
+                    ChallengeMenuSelection--;
+                    if (ChallengeMenuSelection < 0) ChallengeMenuSelection = 2;
+                }
+                if (Raylib.IsKeyPressed(KeyboardKey.Down) || Raylib.IsKeyPressed(KeyboardKey.S))
+                {
+                    ChallengeMenuSelection++;
+                    if (ChallengeMenuSelection > 2) ChallengeMenuSelection = 0;
+                }
+
+                if (Raylib.IsKeyPressed(KeyboardKey.Enter))
+                {
+                    switch (ChallengeMenuSelection)
+                    {
+                        case 0:
+                            ActiveChallenge = 1;
+                            State = GameState.Playing;
+                            ResetGame(ref player);
+                            State = GameState.Playing;
+                            CurrentLevel = new Level1_Parking();
+                            CurrentLevel.Initialize();
+                            break;
+                        case 1:
+                            ActiveChallenge = 2;
+                            State = GameState.Playing;
+                            ResetGame(ref player);
+                            State = GameState.Playing;
+                            CurrentLevel = new Level1_Parking();
+                            CurrentLevel.Initialize();
+                            break;
+                        case 2:
+                            State = GameState.MainMenu;
+                            break;
+                    }
+                }
+
+                if (Raylib.IsKeyPressed(KeyboardKey.Escape)) State = GameState.MainMenu;
+            }
             else if (State == GameState.StoreMenu)
             {
                 if (Raylib.IsKeyPressed(KeyboardKey.One) && GlobalCoins >= 50) { GlobalCoins -= 50; BonusHealth += 10; SaveGame(); }
                 if (Raylib.IsKeyPressed(KeyboardKey.Two) && GlobalCoins >= 100) { GlobalCoins -= 100; BonusSpeed += 5; SaveGame(); }
                 if (Raylib.IsKeyPressed(KeyboardKey.Three) && GlobalCoins >= 100) { GlobalCoins -= 100; BonusMagnet += 5; SaveGame(); }
-                if (Raylib.IsKeyPressed(KeyboardKey.Escape)) State = GameState.StartMenu;
+                if (Raylib.IsKeyPressed(KeyboardKey.Escape)) State = GameState.MainMenu;
             }
         }
 
@@ -424,25 +473,28 @@ namespace VampireSurvivorsClone
 
             int poolCount = 5;
 
-            if (!player.HasMachete)
+            if (ActiveChallenge != 2)
             {
-                pool[poolCount] = new Upgrade { Title = "¡Machetazo!", Description = "Desbloquea ataque cuerpo a cuerpo", EffectId = 10 };
-                poolCount++;
-            }
-            if (!player.HasHalls)
-            {
-                pool[poolCount] = new Upgrade { Title = "¡Halls Rebotador!", Description = "Desbloquea proyectil congelante", EffectId = 11 };
-                poolCount++;
-            }
-            if (!player.HasWhip)
-            {
-                pool[poolCount] = new Upgrade { Title = "¡Cadena Dorada!", Description = "Desbloquea látigo de doble lado", EffectId = 12 };
-                poolCount++;
-            }
-            if (!player.HasPuddle)
-            {
-                pool[poolCount] = new Upgrade { Title = "¡Charco Ácido!", Description = "Desbloquea charco de daño en área", EffectId = 13 };
-                poolCount++;
+                if (!player.HasMachete)
+                {
+                    pool[poolCount] = new Upgrade { Title = "¡Machetazo!", Description = "Desbloquea ataque cuerpo a cuerpo", EffectId = 10 };
+                    poolCount++;
+                }
+                if (!player.HasHalls)
+                {
+                    pool[poolCount] = new Upgrade { Title = "¡Halls Rebotador!", Description = "Desbloquea proyectil congelante", EffectId = 11 };
+                    poolCount++;
+                }
+                if (!player.HasWhip)
+                {
+                    pool[poolCount] = new Upgrade { Title = "¡Cadena Dorada!", Description = "Desbloquea látigo de doble lado", EffectId = 12 };
+                    poolCount++;
+                }
+                if (!player.HasPuddle)
+                {
+                    pool[poolCount] = new Upgrade { Title = "¡Charco Ácido!", Description = "Desbloquea charco de daño en área", EffectId = 13 };
+                    poolCount++;
+                }
             }
 
             for (int i = 0; i < 3; i++)

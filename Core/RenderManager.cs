@@ -43,6 +43,26 @@ namespace VampireSurvivorsClone
 
                 Raylib.DrawText("Controles: WASD/Flechas para mover, ESPACIO para disparar", screenWidth / 2 - 280, screenHeight - 60, 20, Color.Gray);
             }
+            else if (GameManager.State == GameState.ChallengesMenu)
+            {
+                Raylib.DrawRectangle(0, 0, screenWidth, screenHeight, Color.Black);
+                if (menuBg.Id != 0) Raylib.DrawTexturePro(menuBg, new Rectangle(0, 0, menuBg.Width, menuBg.Height), new Rectangle(0, 0, screenWidth, screenHeight), Vector2.Zero, 0.0f, new Color(255, 255, 255, 100));
+
+                int titleWidth = Raylib.MeasureText("SELECCIONA UN DESAFÍO", 40);
+                Raylib.DrawText("SELECCIONA UN DESAFÍO", screenWidth / 2 - titleWidth / 2, 100, 40, Color.Red);
+
+                string[] challenges = { "1. Vida de Cristal (Un golpe = Muerte)", "2. Pacifista (Sin armas nuevas)", "3. Volver" };
+                int startY = 250;
+                int spacing = 60;
+
+                for (int i = 0; i < challenges.Length; i++)
+                {
+                    Color optionColor = (i == GameManager.ChallengeMenuSelection) ? Color.Yellow : Color.DarkGray;
+                    string optionText = (i == GameManager.ChallengeMenuSelection) ? ">> " + challenges[i] : challenges[i];
+                    int textWidth = Raylib.MeasureText(optionText, 30);
+                    Raylib.DrawText(optionText, screenWidth / 2 - textWidth / 2, startY + (i * spacing), 30, optionColor);
+                }
+            }
             else if (GameManager.State == GameState.Playing || GameManager.State == GameState.LevelUpMenu || GameManager.State == GameState.GameOver || GameManager.State == GameState.GameWon)
             {
                 if (player.ScreenShakeTimer > 0)
