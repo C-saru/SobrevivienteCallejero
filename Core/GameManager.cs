@@ -12,6 +12,7 @@ namespace VampireSurvivorsClone
         public static bool UseStaticSprites = true;
         public static ILevel CurrentLevel = null!;
         public static float GameTime = 0.0f;
+        public static float MenuTime = 0.0f;
         public static float spawnTimer = 0.0f;
         public static int MenuSelection = 0;
         public static bool QuitGame = false;
@@ -208,6 +209,8 @@ namespace VampireSurvivorsClone
 
         public static void Update(float deltaTime, ref Player player, ref Camera2D camera, int screenWidth, int screenHeight)
         {
+            MenuTime += deltaTime;
+
             // Dificultad Dinámica
             if (Raylib.IsKeyPressed(KeyboardKey.KpAdd)) BaseDifficulty += 0.1f;
             if (Raylib.IsKeyPressed(KeyboardKey.KpSubtract)) BaseDifficulty = Math.Max(0.1f, BaseDifficulty - 0.1f);
