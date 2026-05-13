@@ -3,7 +3,7 @@ using Raylib_cs;
 
 namespace VampireSurvivorsClone
 {
-    public enum GameState { StartMenu, MainMenu, ModeSelect, ChallengesMenu, Playing, LevelUpMenu, GameOver, GameWon, StoreMenu }
+    public enum GameState { StartMenu, Playing, LevelUpMenu, GameOver, GameWon, StoreMenu, ChallengesMenu }
     public enum GameMode { Arcade2D, Story3D }
 
     public struct Upgrade
@@ -88,8 +88,6 @@ namespace VampireSurvivorsClone
         
         public float Health;
         public float InvincibilityTimer;
-        public float HitFlashTimer;
-        public bool IsBoss;
         
         public int Type; // 0=Normal, 1=Rápido, 2=Tanque, 3=Jefe, 4=Bachaquero, 5=Malandro, 6=Borrachito, 7=Lanza-Piedras, 8=Camionetica
         public float FreezeTimer;
@@ -105,7 +103,7 @@ namespace VampireSurvivorsClone
         public int CurrentFrame;
         public float FrameTimer;
         public int CurrentRow;
-        
+        public float HitFlashTimer;
         public bool IsHoraPico;
     }
 
@@ -148,8 +146,9 @@ namespace VampireSurvivorsClone
         public Vector2 Position;
         public Vector2 Velocity;
         public Color Color;
-        public float LifeTime;
         public float Size;
+        public float LifeTime;
+        public float MaxLifeTime;
         public bool IsActive;
     }
 }

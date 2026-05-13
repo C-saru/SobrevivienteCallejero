@@ -13,11 +13,6 @@ namespace VampireSurvivorsClone
         public static ILevel CurrentLevel = null!;
         public static float GameTime = 0.0f;
         public static float spawnTimer = 0.0f;
-        public static int MenuSelection = 0;
-        public static bool QuitGame = false;
-        public static bool IsStoryMode = false;
-        public static int ActiveChallenge = 0;
-        public static int ChallengeMenuSelection = 0;
         public static float spawnInterval = 2.0f;
         public static Random random = new Random();
         public static bool BossSpawned = false;
@@ -31,56 +26,40 @@ namespace VampireSurvivorsClone
         public static DamageText[] damageTexts = new DamageText[100];
         public static Obstacle[] obstacles = new Obstacle[30];
         public static Pickup[] pickups = new Pickup[50];
+        public static Particle[] particles = new Particle[1000];
 
         public static float HitStopTimer = 0.0f;
         public static float DrunkTimer = 0.0f;
-        public static Particle[] particles = new Particle[1000];
         public static int GlobalCoins = 0;
         public static int BonusHealth = 0;
         public static int BonusSpeed = 0;
-        public static int BonusMagnet = 0;
+        public static int BonusDamage = 0;
 
         public static Upgrade[] currentUpgrades = new Upgrade[3];
         public static Rectangle MapBounds = new Rectangle(-1500, -1500, 3000, 3000);
         public static bool DevMode = false;
-        public static float BaseDifficulty = 1.0f;
     public static float DifficultyMultiplier = 1.0f;
     public static bool BossAcosoMode = false;
     public static float BossRespawnTimer = 0.0f;
+    public static bool QuitGame = false;
+    public static int MenuSelection = 0;
+    public static bool IsStoryMode = false;
+    public static int ActiveChallenge = 0;
+    public static int ChallengeMenuSelection = 0;
+    public static float MenuTime = 0.0f;
 
-    public static void SaveGame() { File.WriteAllText("save.txt", $"{GlobalCoins},{BonusHealth},{BonusSpeed},{BonusMagnet}"); }
-    public static void LoadGame() { if (File.Exists("save.txt")) { var data = File.ReadAllText("save.txt").Split(','); GlobalCoins = int.Parse(data[0]); BonusHealth = int.Parse(data[1]); if (data.Length > 2) { BonusSpeed = int.Parse(data[2]); BonusMagnet = int.Parse(data[3]); } } }
-
-    public static void SpawnParticles(Vector2 pos, int count, Color color)
-    {
-        for (int i = 0; i < count; i++)
-        {
-            for (int j = 0; j < particles.Length; j++)
-            {
-                if (!particles[j].IsActive)
-                {
-                    particles[j].IsActive = true;
-                    particles[j].Position = pos;
-                    float angle = (float)(random.NextDouble() * Math.PI * 2);
-                    float speed = random.Next(50, 201);
-                    particles[j].Velocity = new Vector2((float)Math.Cos(angle), (float)Math.Sin(angle)) * speed;
-                    particles[j].Color = color;
-                    particles[j].LifeTime = (float)(0.2 + random.NextDouble() * 0.6);
-                    particles[j].Size = random.Next(2, 6);
-                    break;
-                }
-            }
-        }
-    }
+    public static void SaveGame() { File.WriteAllText("save.txt", $"{GlobalCoins},{BonusHealth},{BonusSpeed},{BonusDamage}"); }
+    public static void LoadGame() { if (File.Exists("save.txt")) { var data = File.ReadAllText("save.txt").Split(','); GlobalCoins = int.Parse(data[0]); BonusHealth = int.Parse(data[1]); if(data.Length > 2) BonusSpeed = int.Parse(data[2]); if(data.Length > 3) BonusDamage = int.Parse(data[3]); } }
 
     public static void ResetGame(ref Player player)
         {
             LoadGame();
-            State = GameState.MainMenu;
+            State = GameState.StartMenu;
             GameTime = 0.0f;
             spawnTimer = 0.0f;
             spawnInterval = 2.0f;
             BossSpawned = false;
+            Level1_Parking.IsDarknessEvent = false;
 
             player.Position = new Vector2(0, 0);
             player.Size = 30.0f;
@@ -95,8 +74,8 @@ namespace VampireSurvivorsClone
             player.SpeedMult = 1.0f;
             player.MacheteCooldownMult = 1.0f;
             player.MagnetMult = 1.0f;
-            player.WhipDamageMult = 1.0f;
-            player.PickupRadius = 60.0f + BonusMagnet;
+            player.WhipDamageMult = 1.0f + (BonusDamage * 0.1f);
+            player.PickupRadius = 60.0f;
             player.HasPiedrazo = true;
             player.HasMachete = false;
             player.HasHalls = false;
@@ -120,11 +99,31 @@ namespace VampireSurvivorsClone
             for (int i = 0; i < damageTexts.Length; i++) damageTexts[i].IsActive = false;
             for (int i = 0; i < obstacles.Length; i++) obstacles[i].IsActive = false;
             for (int i = 0; i < pickups.Length; i++) pickups[i].IsActive = false;
+            for (int i = 0; i < particles.Length; i++) particles[i].IsActive = false;
 
-            if (ActiveChallenge == 1)
+            if (ActiveChallenge == 1) { player.MaxHealth = 1.0f; player.Health = 1.0f; }
+        }
+
+        public static void SpawnParticles(Vector2 pos, Color color, int count)
+        {
+            for (int k = 0; k < count; k++)
             {
-                player.MaxHealth = 1.0f;
-                player.Health = 1.0f;
+                for (int i = 0; i < particles.Length; i++)
+                {
+                    if (!particles[i].IsActive)
+                    {
+                        particles[i].IsActive = true;
+                        particles[i].Position = pos;
+                        float angle = (float)(random.NextDouble() * Math.PI * 2);
+                        float speed = random.Next(50, 200);
+                        particles[i].Velocity = new Vector2((float)Math.Cos(angle), (float)Math.Sin(angle)) * speed;
+                        particles[i].Color = color;
+                        particles[i].Size = random.Next(3, 8);
+                        particles[i].MaxLifeTime = (float)(random.NextDouble() * 0.5 + 0.2);
+                        particles[i].LifeTime = particles[i].MaxLifeTime;
+                        break;
+                    }
+                }
             }
         }
 
@@ -208,15 +207,15 @@ namespace VampireSurvivorsClone
 
         public static void Update(float deltaTime, ref Player player, ref Camera2D camera, int screenWidth, int screenHeight)
         {
+            MenuTime += deltaTime;
             // Dificultad Dinámica
-            if (Raylib.IsKeyPressed(KeyboardKey.KpAdd)) BaseDifficulty += 0.1f;
-            if (Raylib.IsKeyPressed(KeyboardKey.KpSubtract)) BaseDifficulty = Math.Max(0.1f, BaseDifficulty - 0.1f);
-            DifficultyMultiplier = Math.Max(0.1f, BaseDifficulty + (GameTime / 60.0f) * 0.4f);
+            if (Raylib.IsKeyPressed(KeyboardKey.KpAdd)) DifficultyMultiplier += 0.1f;
+            if (Raylib.IsKeyPressed(KeyboardKey.KpSubtract)) DifficultyMultiplier = Math.Max(0.1f, DifficultyMultiplier - 0.1f);
 
             // Tecla de Salida / Pausa
             if (Raylib.IsKeyPressed(KeyboardKey.Escape))
             {
-                if (State == GameState.Playing) State = GameState.MainMenu;
+                if (State == GameState.Playing) State = GameState.StartMenu;
                 Raylib.EnableCursor();
             }
             // Gestión del cursor para el modo FPS
@@ -246,76 +245,83 @@ namespace VampireSurvivorsClone
 
             if (State == GameState.StartMenu)
             {
-                if (Raylib.IsKeyPressed(KeyboardKey.Enter))
-                {
-                    State = GameState.MainMenu;
-                }
-            }
-            else if (State == GameState.MainMenu)
-            {
                 if (Raylib.IsKeyPressed(KeyboardKey.F)) { UseStaticSprites = !UseStaticSprites; }
+                if (Raylib.IsKeyPressed(KeyboardKey.M)) 
+                { 
+                    CurrentMode = CurrentMode == GameMode.Arcade2D ? GameMode.Story3D : GameMode.Arcade2D; 
+                }
+                if (Raylib.IsKeyPressed(KeyboardKey.T)) State = GameState.StoreMenu;
 
-                if (Raylib.IsKeyPressed(KeyboardKey.Up) || Raylib.IsKeyPressed(KeyboardKey.W))
-                {
-                    MenuSelection--;
-                    if (MenuSelection < 0) MenuSelection = 4;
-                }
-                if (Raylib.IsKeyPressed(KeyboardKey.Down) || Raylib.IsKeyPressed(KeyboardKey.S))
-                {
-                    MenuSelection++;
-                    if (MenuSelection > 4) MenuSelection = 0;
-                }
+                // Navegación del menú
+                if (Raylib.IsKeyPressed(KeyboardKey.Up) || Raylib.IsKeyPressed(KeyboardKey.W)) MenuSelection--;
+                if (Raylib.IsKeyPressed(KeyboardKey.Down) || Raylib.IsKeyPressed(KeyboardKey.S)) MenuSelection++;
+
+                // 1. Cambia los límites de navegación:
+                if (MenuSelection < 0) MenuSelection = 5; // Antes era 4
+                if (MenuSelection > 5) MenuSelection = 0; // Antes era 4
 
                 if (Raylib.IsKeyPressed(KeyboardKey.Enter))
                 {
+                    // 2. En el switch (MenuSelection), añade la opción 3 (empuja las demás hacia abajo):
                     switch (MenuSelection)
                     {
-                        case 0:
-                            State = GameState.Playing;
-                            CurrentMode = GameMode.Arcade2D;
+                        case 0: // Modo Arcade
                             IsStoryMode = false;
+                            CurrentMode = GameMode.Arcade2D;
                             ResetGame(ref player);
-                            State = GameState.Playing; // ResetGame sets to MainMenu
                             CurrentLevel = new Level1_Parking();
                             CurrentLevel.Initialize();
-                            break;
-                        case 1:
                             State = GameState.Playing;
-                            CurrentMode = GameMode.Story3D;
+                            break;
+                        case 1: // Modo Historia
                             IsStoryMode = true;
+                            CurrentMode = GameMode.Story3D;
                             ResetGame(ref player);
-                            State = GameState.Playing;
                             CurrentLevel = new Level1_Parking();
                             CurrentLevel.Initialize();
+                            State = GameState.Playing;
                             break;
-                        case 2:
+                        case 2: // Desafíos
                             State = GameState.ChallengesMenu;
                             break;
-                        case 3:
+                        case 3: // NUEVO: MINIJUEGOS
+                            IsStoryMode = false;
+                            ActiveChallenge = 0;
+                            ResetGame(ref player);
+                            CurrentLevel = new Level2_Autopista();
+                            State = GameState.Playing;
+                            break;
+                        case 4: // El Kiosko
                             State = GameState.StoreMenu;
                             break;
-                        case 4:
+                        case 5: // Salir
                             QuitGame = true;
                             break;
                     }
                 }
             }
+            else if (State == GameState.ChallengesMenu)
+            {
+                if (Raylib.IsKeyPressed(KeyboardKey.Up) || Raylib.IsKeyPressed(KeyboardKey.W)) ChallengeMenuSelection--;
+                if (Raylib.IsKeyPressed(KeyboardKey.Down) || Raylib.IsKeyPressed(KeyboardKey.S)) ChallengeMenuSelection++;
+                if (ChallengeMenuSelection < 0) ChallengeMenuSelection = 2;
+                if (ChallengeMenuSelection > 2) ChallengeMenuSelection = 0;
+
+                if (Raylib.IsKeyPressed(KeyboardKey.Enter))
+                {
+                    if (ChallengeMenuSelection == 0) { ActiveChallenge = 1; State = GameState.Playing; ResetGame(ref player); CurrentLevel = new Level1_Parking(); CurrentLevel.Initialize(); }
+                    else if (ChallengeMenuSelection == 1) { ActiveChallenge = 2; State = GameState.Playing; ResetGame(ref player); CurrentLevel = new Level1_Parking(); CurrentLevel.Initialize(); }
+                    else { State = GameState.StartMenu; }
+                }
+                if (Raylib.IsKeyPressed(KeyboardKey.Escape)) State = GameState.StartMenu;
+            }
             else if (State == GameState.Playing)
             {
-                for (int i = 0; i < particles.Length; i++)
-                {
-                    if (particles[i].IsActive)
-                    {
-                        particles[i].Position += particles[i].Velocity * deltaTime;
-                        particles[i].LifeTime -= deltaTime;
-                        if (particles[i].LifeTime <= 0)
-                        {
-                            particles[i].IsActive = false;
-                        }
-                    }
-                }
-
                 GameTime += deltaTime;
+                if (Raylib.IsKeyPressed(KeyboardKey.V)) 
+                {
+                    CurrentMode = CurrentMode == GameMode.Arcade2D ? GameMode.Story3D : GameMode.Arcade2D; 
+                }
 
                 if (HitStopTimer > 0) { HitStopTimer -= deltaTime; return; }
                 if (DrunkTimer > 0) { DrunkTimer -= deltaTime; }
@@ -344,12 +350,7 @@ namespace VampireSurvivorsClone
                 float baseInterval = Math.Max(0.5f, 2.0f - (GameTime / 200.0f));
                 float currentSpawnInterval = baseInterval / Math.Max(0.1f, GameManager.DifficultyMultiplier);
                 spawnTimer += deltaTime;
-                // Minuto 1 ('El Matraqueo'): Desactiva el spawn normal por 10 segundos
-                if (GameTime >= 60.0f && GameTime < 70.0f)
-                {
-                    spawnTimer = 0.0f;
-                }
-                else if (spawnTimer >= currentSpawnInterval)
+                if (spawnTimer >= currentSpawnInterval)
                 {
                     CurrentLevel.SpawnEnemy(player.Position, GameTime);
                     spawnTimer = 0.0f;
@@ -364,10 +365,30 @@ namespace VampireSurvivorsClone
                     if (damageTexts[i].IsActive)
                     {
                         damageTexts[i].LifeTime -= deltaTime;
-                        damageTexts[i].Position.Y -= 50.0f * deltaTime;
+                        // Hacemos que flote hacia arriba y un poco hacia un lado (movimiento pseudo-físico ligero)
+                        damageTexts[i].Position.Y -= 60.0f * deltaTime;
+                        damageTexts[i].Position.X += (float)Math.Sin(GameTime * 10f + i) * 10f * deltaTime;
+                        
                         if (damageTexts[i].LifeTime <= 0)
                         {
                             damageTexts[i].IsActive = false;
+                        }
+                    }
+                }
+
+                for (int i = 0; i < particles.Length; i++)
+                {
+                    if (particles[i].IsActive)
+                    {
+                        particles[i].LifeTime -= deltaTime;
+                        if (particles[i].LifeTime <= 0)
+                        {
+                            particles[i].IsActive = false;
+                        }
+                        else
+                        {
+                            particles[i].Position += particles[i].Velocity * deltaTime;
+                            particles[i].Velocity *= 0.95f; // Fricción
                         }
                     }
                 }
@@ -411,53 +432,12 @@ namespace VampireSurvivorsClone
                     ResetGame(ref player);
                 }
             }
-            else if (State == GameState.ChallengesMenu)
-            {
-                if (Raylib.IsKeyPressed(KeyboardKey.Up) || Raylib.IsKeyPressed(KeyboardKey.W))
-                {
-                    ChallengeMenuSelection--;
-                    if (ChallengeMenuSelection < 0) ChallengeMenuSelection = 2;
-                }
-                if (Raylib.IsKeyPressed(KeyboardKey.Down) || Raylib.IsKeyPressed(KeyboardKey.S))
-                {
-                    ChallengeMenuSelection++;
-                    if (ChallengeMenuSelection > 2) ChallengeMenuSelection = 0;
-                }
-
-                if (Raylib.IsKeyPressed(KeyboardKey.Enter))
-                {
-                    switch (ChallengeMenuSelection)
-                    {
-                        case 0:
-                            ActiveChallenge = 1;
-                            State = GameState.Playing;
-                            ResetGame(ref player);
-                            State = GameState.Playing;
-                            CurrentLevel = new Level1_Parking();
-                            CurrentLevel.Initialize();
-                            break;
-                        case 1:
-                            ActiveChallenge = 2;
-                            State = GameState.Playing;
-                            ResetGame(ref player);
-                            State = GameState.Playing;
-                            CurrentLevel = new Level1_Parking();
-                            CurrentLevel.Initialize();
-                            break;
-                        case 2:
-                            State = GameState.MainMenu;
-                            break;
-                    }
-                }
-                
-                if (Raylib.IsKeyPressed(KeyboardKey.Escape)) State = GameState.MainMenu;
-            }
             else if (State == GameState.StoreMenu)
             {
-                if (Raylib.IsKeyPressed(KeyboardKey.One) && GlobalCoins >= 50) { GlobalCoins -= 50; BonusHealth += 10; SaveGame(); }
-                if (Raylib.IsKeyPressed(KeyboardKey.Two) && GlobalCoins >= 100) { GlobalCoins -= 100; BonusSpeed += 5; SaveGame(); }
-                if (Raylib.IsKeyPressed(KeyboardKey.Three) && GlobalCoins >= 100) { GlobalCoins -= 100; BonusMagnet += 5; SaveGame(); }
-                if (Raylib.IsKeyPressed(KeyboardKey.Escape)) State = GameState.MainMenu;
+                if (Raylib.IsKeyPressed(KeyboardKey.One) && GlobalCoins >= 50) { GlobalCoins -= 50; BonusHealth += 20; SaveGame(); }
+                if (Raylib.IsKeyPressed(KeyboardKey.Two) && GlobalCoins >= 100) { GlobalCoins -= 100; BonusSpeed += 15; SaveGame(); }
+                if (Raylib.IsKeyPressed(KeyboardKey.Three) && GlobalCoins >= 150) { GlobalCoins -= 150; BonusDamage += 1; SaveGame(); }
+                if (Raylib.IsKeyPressed(KeyboardKey.Escape)) State = GameState.StartMenu;
             }
         }
 
@@ -473,28 +453,12 @@ namespace VampireSurvivorsClone
 
             int poolCount = 5;
 
-            if (ActiveChallenge != 2)
+            if (ActiveChallenge != 2) // Si no somos Pacifistas, damos armas
             {
-                if (!player.HasMachete)
-                {
-                    pool[poolCount] = new Upgrade { Title = "¡Machetazo!", Description = "Desbloquea ataque cuerpo a cuerpo", EffectId = 10 };
-                    poolCount++;
-                }
-                if (!player.HasHalls)
-                {
-                    pool[poolCount] = new Upgrade { Title = "¡Halls Rebotador!", Description = "Desbloquea proyectil congelante", EffectId = 11 };
-                    poolCount++;
-                }
-                if (!player.HasWhip)
-                {
-                    pool[poolCount] = new Upgrade { Title = "¡Cadena Dorada!", Description = "Desbloquea látigo de doble lado", EffectId = 12 };
-                    poolCount++;
-                }
-                if (!player.HasPuddle)
-                {
-                    pool[poolCount] = new Upgrade { Title = "¡Charco Ácido!", Description = "Desbloquea charco de daño en área", EffectId = 13 };
-                    poolCount++;
-                }
+                if (!player.HasMachete) { pool[poolCount] = new Upgrade { Title = "¡Machetazo!", Description = "Desbloquea ataque cuerpo a cuerpo", EffectId = 10 }; poolCount++; }
+                if (!player.HasHalls) { pool[poolCount] = new Upgrade { Title = "¡Halls Rebotador!", Description = "Desbloquea proyectil congelante", EffectId = 11 }; poolCount++; }
+                if (!player.HasWhip) { pool[poolCount] = new Upgrade { Title = "¡Cadena Dorada!", Description = "Desbloquea látigo de doble lado", EffectId = 12 }; poolCount++; }
+                if (!player.HasPuddle) { pool[poolCount] = new Upgrade { Title = "¡Charco Ácido!", Description = "Desbloquea charco de daño en área", EffectId = 13 }; poolCount++; }
             }
 
             for (int i = 0; i < 3; i++)

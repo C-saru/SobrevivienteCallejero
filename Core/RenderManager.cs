@@ -13,54 +13,54 @@ namespace VampireSurvivorsClone
 
             if (GameManager.State == GameState.StartMenu)
             {
-                if (titleBgTexture.Id != 0) 
-                {
-                    Raylib.DrawTexturePro(titleBgTexture, new Rectangle(0, 0, titleBgTexture.Width, titleBgTexture.Height), new Rectangle(0, 0, screenWidth, screenHeight), Vector2.Zero, 0.0f, Color.White);
-                }
+                if (titleBgTexture.Id != 0) Raylib.DrawTexturePro(titleBgTexture, new Rectangle(0, 0, titleBgTexture.Width, titleBgTexture.Height), new Rectangle(0, 0, screenWidth, screenHeight), Vector2.Zero, 0.0f, new Color(150, 150, 150, 255));
                 
-                int startAlpha = (int)(127 + 128 * Math.Cos(Raylib.GetTime() * 3.0f));
-                Color startTextColor = new Color(255, 255, 255, startAlpha);
-                int textWidth = Raylib.MeasureText("Pulsa ENTER para entrar al barrio", 30);
-                Raylib.DrawText("Pulsa ENTER para entrar al barrio", screenWidth / 2 - textWidth / 2, screenHeight - 100, 30, startTextColor);
-            }
-            else if (GameManager.State == GameState.MainMenu)
-            {
-                if (menuBg.Id != 0) Raylib.DrawTexturePro(menuBg, new Rectangle(0, 0, menuBg.Width, menuBg.Height), new Rectangle(0, 0, screenWidth, screenHeight), Vector2.Zero, 0.0f, Color.White);
+                // Animación Logo cayendo
+                float logoY = (float)Math.Min(screenHeight / 2 - 150, GameManager.GameTime * 800 - 400); 
+                if (logoY < screenHeight / 2 - 150) GameManager.GameTime += Raylib.GetFrameTime(); // Pequeño hack visual inicial
                 
-                Raylib.DrawText("SOBREVIVIENTE CALLEJERO", screenWidth / 2 - 250, 100, 40, Color.Gold);
-
-                string[] options = { "Modo Arcade", "Modo Historia", "Desafíos", "El Kiosko", "Salir" };
-                int startY = 250;
-                int spacing = 50;
+                float logoScale = 1.0f + 0.05f * (float)Math.Sin(Raylib.GetTime() * 4.0f);
+                int titleFontSize = (int)(60 * logoScale);
+                int titleWidth = Raylib.MeasureText("SOBREVIVIENTE CALLEJERO", titleFontSize);
+                
+                // Sombra del texto
+                Raylib.DrawText("SOBREVIVIENTE CALLEJERO", screenWidth / 2 - titleWidth / 2 + 5, (int)logoY + 5, titleFontSize, Color.Black);
+                Raylib.DrawText("SOBREVIVIENTE CALLEJERO", screenWidth / 2 - titleWidth / 2, (int)logoY, titleFontSize, Color.Gold);
+                
+                // Texto parpadeante (Alpha dinámico)
+                int startAlpha = (int)(155 + 100 * Math.Sin(Raylib.GetTime() * 6.0f));
+                Raylib.DrawText("Usa Flechas/WS para seleccionar, ENTER para confirmar", screenWidth / 2 - 280, screenHeight / 2 - 10, 20, new Color(255, 255, 255, startAlpha));
+                
+                // Menú opciones
+                string[] options = { "Modo Arcade", "Modo Historia", "Desafíos", "Minijuegos", "El Kiosko", "Salir" };
+                int menuStartY = screenHeight / 2 + 30;
+                Raylib.DrawRectangle(screenWidth / 2 - 300, menuStartY - 10, 600, 230, new Color(0, 0, 0, 200));
+                Raylib.DrawRectangleLines(screenWidth / 2 - 300, menuStartY - 10, 600, 230, Color.Gold);
 
                 for (int i = 0; i < options.Length; i++)
                 {
-                    Color optionColor = (i == GameManager.MenuSelection) ? Color.Yellow : Color.DarkGray;
-                    string optionText = (i == GameManager.MenuSelection) ? ">> " + options[i] : options[i];
-                    int textWidth = Raylib.MeasureText(optionText, 30);
-                    Raylib.DrawText(optionText, screenWidth / 2 - textWidth / 2, startY + (i * spacing), 30, optionColor);
+                    Color optionColor = (i == GameManager.MenuSelection) ? Color.Gold : Color.LightGray;
+                    string prefix = (i == GameManager.MenuSelection) ? ">> " : "   ";
+                    string text = prefix + options[i];
+                    int optWidth = Raylib.MeasureText(text, 22);
+                    Raylib.DrawText(text, screenWidth / 2 - optWidth / 2, menuStartY + 10 + i * 30, 22, optionColor);
                 }
 
-                Raylib.DrawText("Controles: WASD/Flechas para mover, ESPACIO para disparar", screenWidth / 2 - 280, screenHeight - 60, 20, Color.Gray);
+                Raylib.DrawText("Controles: WASD/Flechas mover, ESPACIO disparar", screenWidth / 2 - 230, menuStartY + 200, 18, Color.Gray);
+                Raylib.DrawText("[ M ] Modo: " + GameManager.CurrentMode.ToString() + "  |  [ F ] Sprites: " + (GameManager.UseStaticSprites ? "OFF" : "ON"), screenWidth / 2 - 190, menuStartY + 245, 16, Color.DarkGray);
             }
             else if (GameManager.State == GameState.ChallengesMenu)
             {
-                Raylib.DrawRectangle(0, 0, screenWidth, screenHeight, Color.Black);
-                if (menuBg.Id != 0) Raylib.DrawTexturePro(menuBg, new Rectangle(0, 0, menuBg.Width, menuBg.Height), new Rectangle(0, 0, screenWidth, screenHeight), Vector2.Zero, 0.0f, new Color(255, 255, 255, 100));
+                Raylib.ClearBackground(Color.Black);
+                Raylib.DrawText("SELECCIONA UN DESAFÍO", screenWidth / 2 - 220, 150, 40, Color.Red);
                 
-                int titleWidth = Raylib.MeasureText("SELECCIONA UN DESAFÍO", 40);
-                Raylib.DrawText("SELECCIONA UN DESAFÍO", screenWidth / 2 - titleWidth / 2, 100, 40, Color.Red);
-
-                string[] challenges = { "1. Vida de Cristal (Un golpe = Muerte)", "2. Pacifista (Sin armas nuevas)", "3. Volver" };
-                int startY = 250;
-                int spacing = 60;
-
-                for (int i = 0; i < challenges.Length; i++)
+                string[] challOptions = { "1. Vida de Cristal (Un golpe = Muerte)", "2. Pacifista (Sin armas nuevas)", "3. Volver al Menú" };
+                for (int i = 0; i < challOptions.Length; i++)
                 {
-                    Color optionColor = (i == GameManager.ChallengeMenuSelection) ? Color.Yellow : Color.DarkGray;
-                    string optionText = (i == GameManager.ChallengeMenuSelection) ? ">> " + challenges[i] : challenges[i];
-                    int textWidth = Raylib.MeasureText(optionText, 30);
-                    Raylib.DrawText(optionText, screenWidth / 2 - textWidth / 2, startY + (i * spacing), 30, optionColor);
+                    Color cColor = (i == GameManager.ChallengeMenuSelection) ? Color.Gold : Color.LightGray;
+                    string text = ((i == GameManager.ChallengeMenuSelection) ? ">> " : "   ") + challOptions[i];
+                    int optWidth = Raylib.MeasureText(text, 24);
+                    Raylib.DrawText(text, screenWidth / 2 - optWidth / 2, 300 + i * 50, 24, cColor);
                 }
             }
             else if (GameManager.State == GameState.Playing || GameManager.State == GameState.LevelUpMenu || GameManager.State == GameState.GameOver || GameManager.State == GameState.GameWon)
@@ -139,11 +139,14 @@ namespace VampireSurvivorsClone
                             else if (GameManager.enemies[i].Type == 8 && !GameManager.enemies[i].IsDashing)
                                 enemyColor = ((int)(GameManager.GameTime * 10) % 2 == 0) ? Color.Red : Color.White; 
                             
-                            if (GameManager.enemies[i].HitFlashTimer > 0)
+                            // Hit Flash logic
+                            if (GameManager.enemies[i].Health < GameConfig.Enemies[GameManager.enemies[i].Type].Health)
                             {
-                                enemyColor = Color.White;
+                                // We don't have a specific hit timer per enemy yet, so we use a quick flash based on health loss 
+                                // Alternatively, we can check if Health is very close to MaxHealth (meaning it hasn't taken damage)
+                                // or add a simple flash when taking damage.
                             }
-                            
+
                             Texture2D currentEnemyTex = enemyTextures[GameManager.enemies[i].Type];
 
                             if (currentEnemyTex.Id == 0 || currentEnemyTex.Width == 0)
@@ -162,7 +165,6 @@ namespace VampireSurvivorsClone
                                 Rectangle destRec = new Rectangle(GameManager.enemies[i].Position.X + GameManager.enemies[i].Size / 2.0f, GameManager.enemies[i].Position.Y + GameManager.enemies[i].Size / 2.0f, GameManager.enemies[i].Size * 1.5f, GameManager.enemies[i].Size * 1.5f);
                                 Vector2 origin = new Vector2(destRec.Width / 2.0f, destRec.Height / 2.0f);
                                 Color drawColor = GameManager.enemies[i].FreezeTimer > 0 ? Color.SkyBlue : Color.White;
-                                if (GameManager.enemies[i].HitFlashTimer > 0) drawColor = Color.White;
                                 Raylib.DrawTexturePro(currentEnemyTex, sourceRec, destRec, origin, 0.0f, drawColor);
                             }
                         }
@@ -184,6 +186,18 @@ namespace VampireSurvivorsClone
                     {
                         if (GameManager.manualProjectiles[i].IsActive)
                             Raylib.DrawCircleV(GameManager.manualProjectiles[i].Position, GameManager.manualProjectiles[i].Size, Color.Yellow);
+                    }
+
+                    for (int i = 0; i < GameManager.particles.Length; i++)
+                    {
+                        if (GameManager.particles[i].IsActive)
+                        {
+                            // Hacemos que se desvanezcan con el tiempo
+                            byte alpha = (byte)(255 * (GameManager.particles[i].LifeTime / GameManager.particles[i].MaxLifeTime));
+                            Color pColor = GameManager.particles[i].Color;
+                            pColor.A = alpha;
+                            Raylib.DrawRectangle((int)GameManager.particles[i].Position.X, (int)GameManager.particles[i].Position.Y, (int)GameManager.particles[i].Size, (int)GameManager.particles[i].Size, pColor);
+                        }
                     }
 
                     if (WeaponManager.isAttacking)
@@ -264,33 +278,24 @@ namespace VampireSurvivorsClone
                     for (int i = 0; i < GameManager.damageTexts.Length; i++)
                     {
                         if (GameManager.damageTexts[i].IsActive)
-                        {
-                            int fontSize = 20;
-                            Color textColor = Color.Red;
-                            if (GameManager.damageTexts[i].Value >= 40)
-                            {
-                                fontSize = 30;
-                                textColor = Color.Orange;
-                            }
-                            Raylib.DrawText(GameManager.damageTexts[i].Value.ToString(), (int)GameManager.damageTexts[i].Position.X, (int)GameManager.damageTexts[i].Position.Y, fontSize, textColor);
-                        }
-                    }
-
-                    for (int i = 0; i < GameManager.particles.Length; i++)
-                    {
-                        if (GameManager.particles[i].IsActive)
-                        {
-                            Raylib.DrawRectangle((int)GameManager.particles[i].Position.X, (int)GameManager.particles[i].Position.Y, (int)GameManager.particles[i].Size, (int)GameManager.particles[i].Size, GameManager.particles[i].Color);
-                        }
+                            Raylib.DrawText(GameManager.damageTexts[i].Value.ToString(), (int)GameManager.damageTexts[i].Position.X, (int)GameManager.damageTexts[i].Position.Y, 20, Color.Red);
                     }
 
                     Raylib.EndMode2D();
                 }
                 else if (GameManager.CurrentMode == GameMode.Story3D)
                 {
-                    camera3D.Position = new Vector3(player.Position.X, 20.0f + (float)Math.Sin(player.HeadBobTimer) * 1.5f, player.Position.Y);
+                    // Head-bobbing effect
+                    float bobbingAmount = 0.0f;
+                    if (player.SpeedMult > 0 && player.FacingDirection != Vector2.Zero)
+                    {
+                        bobbingAmount = (float)Math.Sin(GameManager.GameTime * 15.0f) * 2.0f;
+                        if (player.IsSprinting) bobbingAmount *= 2.0f;
+                    }
+                    
+                    camera3D.Position = new Vector3(player.Position.X, 20.0f + bobbingAmount, player.Position.Y);
                     Vector2 lookDir = player.FacingDirection == Vector2.Zero ? new Vector2(0, 1) : Vector2.Normalize(player.FacingDirection);
-                    camera3D.Target = new Vector3(player.Position.X + lookDir.X * 100.0f, 20.0f, player.Position.Y + lookDir.Y * 100.0f);
+                    camera3D.Target = new Vector3(player.Position.X + lookDir.X * 100.0f, 20.0f + bobbingAmount, player.Position.Y + lookDir.Y * 100.0f);
 
                     Raylib.BeginMode3D(camera3D);
                     
@@ -302,32 +307,32 @@ namespace VampireSurvivorsClone
                     int endY = (int)(player.Position.Y + viewRadius) / tileSize * tileSize;
 
                     // --- NUEVA LÓGICA DE LINTERNA PARA EL PISO ---
-                    Color baseFloorColor = new Color(30, 30, 30, 255);
+                    Color floorColor = new Color(0, 100, 0, 255);
+                    if (GameManager.DifficultyMultiplier >= 3.0f) floorColor = Color.Red;
+                    else if (GameManager.DifficultyMultiplier >= 2.0f) floorColor = Color.Orange;
 
                     for (int x = startX; x <= endX; x += tileSize)
                     {
                         for (int y = startY; y <= endY; y += tileSize)
                         {
-                            // Center of the current tile
-                            Vector2 targetPos = new Vector2(x + tileSize / 2.0f, y + tileSize / 2.0f);
+                            Vector2 targetPos = new Vector2(x, y);
                             float dist = Vector2.Distance(player.Position, targetPos);
                             
                             float dotProduct = dist > 0 ? Vector2.Dot(lookDir, (targetPos - player.Position) / dist) : 1.0f;
                             float currentMaxDist = (dotProduct >= 0.866f) ? 400.0f : 120.0f;
 
+                            // Si es evento de oscuridad, limitamos brutalmente la visión
+                            if (Level1_Parking.IsDarknessEvent) 
+                            {
+                                currentMaxDist *= 0.4f; 
+                            }
+
                             if (dist < currentMaxDist)
                             {
                                 float alpha = 1.0f - (dist / currentMaxDist);
-                                // Modulate the color by alpha (fade out with distance), keeping the alpha channel at 255
-                                Color finalFloorColor = new Color(
-                                    (int)(baseFloorColor.R * alpha),
-                                    (int)(baseFloorColor.G * alpha),
-                                    (int)(baseFloorColor.B * alpha),
-                                    255
-                                );
-
-                                // Draw flattened cube for the floor tile
-                                Raylib.DrawCube(new Vector3(targetPos.X, 0, targetPos.Y), tileSize, 0.1f, tileSize, finalFloorColor);
+                                Color finalLineColor = new Color(floorColor.R, floorColor.G, floorColor.B, (byte)(255 * alpha));
+                                Raylib.DrawLine3D(new Vector3(x, 0, y), new Vector3(x + tileSize, 0, y), finalLineColor);
+                                Raylib.DrawLine3D(new Vector3(x, 0, y), new Vector3(x, 0, y + tileSize), finalLineColor);
                             }
                         }
                     }
@@ -341,20 +346,21 @@ namespace VampireSurvivorsClone
                             float dotProduct = dist > 0 ? Vector2.Dot(lookDir, (GameManager.enemies[i].Position - player.Position) / dist) : 1.0f;
                             float currentMaxDist = (dotProduct >= 0.866f) ? 400.0f : 120.0f;
 
+                            // Si es evento de oscuridad, limitamos brutalmente la visión
+                            if (Level1_Parking.IsDarknessEvent) 
+                            {
+                                currentMaxDist *= 0.4f; 
+                            }
+
                             if (dist > currentMaxDist) continue; 
 
                             float alpha = 1.0f - (dist / currentMaxDist);
                             Vector3 enemyPos3D = new Vector3(GameManager.enemies[i].Position.X, 20.0f, GameManager.enemies[i].Position.Y);
-                            
-                            // Fake DOD Shadow
-                            Raylib.DrawCylinder(new Vector3(GameManager.enemies[i].Position.X, 0.1f, GameManager.enemies[i].Position.Y), GameManager.enemies[i].Size * 0.6f, GameManager.enemies[i].Size * 0.6f, 0.1f, 10, new Color(0, 0, 0, (int)(180 * alpha)));
-                            
                             Texture2D tex = enemyTextures[GameManager.enemies[i].Type];
                             
                             Color baseColor = GameManager.enemies[i].FreezeTimer > 0 ? Color.SkyBlue : Color.White;
-                            if (GameManager.enemies[i].HitFlashTimer > 0) baseColor = Color.White;
                             
-                            // AQUI REPARAMOS LA AMBIGUEDAD
+                            // Color de niebla (fog) para los enemigos, se mezclan con negro a lo lejos
                             Color fogColor = new Color((int)(baseColor.R * alpha), (int)(baseColor.G * alpha), (int)(baseColor.B * alpha), (int)255);
 
                             if (tex.Id != 0)
@@ -368,13 +374,14 @@ namespace VampireSurvivorsClone
                                 int rowToDraw = GameManager.UseStaticSprites ? 0 : GameManager.enemies[i].CurrentRow;
                                 Rectangle source = new Rectangle(frameToDraw * fWidth, rowToDraw * fHeight, fWidth, fHeight);
                                 
+                                // Sombra circular proyectada debajo del enemigo (mejora la inmersión)
+                                Raylib.DrawCircle3D(new Vector3(enemyPos3D.X, 0.5f, enemyPos3D.Z), GameManager.enemies[i].Size * 0.8f, new Vector3(1, 0, 0), 90.0f, new Color(0, 0, 0, (int)(100 * alpha)));
+                                
                                 Raylib.DrawBillboardRec(camera3D, tex, source, enemyPos3D, new Vector2(GameManager.enemies[i].Size * 1.5f, GameManager.enemies[i].Size * 1.5f), fogColor);
                             }
                             else
                             {
-                                // AQUI REPARAMOS LA AMBIGUEDAD
-                                Color solidColor = GameManager.enemies[i].HitFlashTimer > 0 ? Color.White : Color.Red;
-                                Color cubeColor = new Color((int)(solidColor.R * alpha), (int)(solidColor.G * alpha), (int)(solidColor.B * alpha), (int)255);
+                                Color cubeColor = new Color((int)(Color.Red.R * alpha), (int)0, (int)0, (int)255);
                                 Raylib.DrawCube(enemyPos3D, GameManager.enemies[i].Size, GameManager.enemies[i].Size, GameManager.enemies[i].Size, cubeColor);
                             }
                         }
@@ -442,14 +449,6 @@ namespace VampireSurvivorsClone
                     Raylib.DrawCube(new Vector3(bounds.X + bounds.Width / 2, wallHeight / 2, bounds.Y + bounds.Height + wallThickness / 2), bounds.Width + wallThickness * 2, wallHeight, wallThickness, Color.DarkGray); // Sur
                     Raylib.DrawCube(new Vector3(bounds.X + bounds.Width + wallThickness / 2, wallHeight / 2, bounds.Y + bounds.Height / 2), wallThickness, wallHeight, bounds.Height, Color.DarkGray); // Este
                     Raylib.DrawCube(new Vector3(bounds.X - wallThickness / 2, wallHeight / 2, bounds.Y + bounds.Height / 2), wallThickness, wallHeight, bounds.Height, Color.DarkGray); // Oeste
-
-                    for (int i = 0; i < GameManager.particles.Length; i++)
-                    {
-                        if (GameManager.particles[i].IsActive)
-                        {
-                            Raylib.DrawCube(new Vector3(GameManager.particles[i].Position.X, 1.0f, GameManager.particles[i].Position.Y), GameManager.particles[i].Size, GameManager.particles[i].Size, GameManager.particles[i].Size, GameManager.particles[i].Color);
-                        }
-                    }
 
                     Raylib.EndMode3D();
                     DrawRadar(camera3D, screenWidth, GameManager.enemies);
@@ -602,13 +601,43 @@ namespace VampireSurvivorsClone
             else if (GameManager.State == GameState.StoreMenu)
             {
                 Raylib.DrawRectangle(0, 0, screenWidth, screenHeight, new Color(0, 0, 0, 255));
-                if (menuBg.Id != 0) Raylib.DrawTexturePro(menuBg, new Rectangle(0, 0, menuBg.Width, menuBg.Height), new Rectangle(0, 0, screenWidth, screenHeight), Vector2.Zero, 0.0f, Color.White);
-                Raylib.DrawText("PUESTO DE DULCES Y BISUTERÍA", screenWidth / 2 - 250, 50, 30, Color.Gold);
-                Raylib.DrawText("Monedas Disponibles: " + GameManager.GlobalCoins, screenWidth / 2 - 150, 120, 20, Color.White);
-                Raylib.DrawText("1. Comprar Paquete de Caramelos (+10 Vida Máxima Inicial) - 50 Monedas", screenWidth / 2 - 350, 200, 20, Color.Yellow);
-                Raylib.DrawText("2. Comprar Zapatos de Goma (+5 Velocidad Base) - 100 Monedas", screenWidth / 2 - 350, 240, 20, Color.Yellow);
-                Raylib.DrawText("3. Comprar Imán de Nevera (+5 Radio Imán Base) - 100 Monedas", screenWidth / 2 - 350, 280, 20, Color.Yellow);
-                Raylib.DrawText("Presiona ESC para volver al menú", screenWidth / 2 - 180, screenHeight - 50, 20, Color.Gray);
+                if (menuBg.Id != 0) Raylib.DrawTexturePro(menuBg, new Rectangle(0, 0, menuBg.Width, menuBg.Height), new Rectangle(0, 0, screenWidth, screenHeight), Vector2.Zero, 0.0f, new Color(100, 100, 100, 255)); // Fondo oscurecido
+                
+                // Animación de título
+                float titleScale = 1.0f + 0.05f * (float)Math.Sin(Raylib.GetTime() * 3.0f);
+                int titleFontSize = (int)(40 * titleScale);
+                int titleWidth = Raylib.MeasureText("EL KIOSKO DE MEJORAS", titleFontSize);
+                Raylib.DrawText("EL KIOSKO DE MEJORAS", screenWidth / 2 - titleWidth / 2, 40, titleFontSize, Color.Gold);
+                
+                Raylib.DrawText("Monedas Disponibles: " + GameManager.GlobalCoins, screenWidth / 2 - 150, 100, 24, Color.Green);
+
+                // Cuadro de Tienda
+                Rectangle storeBox = new Rectangle(screenWidth / 2 - 400, 150, 800, 350);
+                Raylib.DrawRectangleRec(storeBox, new Color(20, 20, 30, 220));
+                Raylib.DrawRectangleLinesEx(storeBox, 4, Color.Gold);
+
+                // Opciones de compra
+                int startY = 180;
+                int lineSpacing = 60;
+
+                // Opción 1: Vida
+                Color c1 = GameManager.GlobalCoins >= 50 ? Color.White : Color.DarkGray;
+                Raylib.DrawText("[1] Piel de Caimán (+20 Vida Base) - 50 Monedas", (int)storeBox.X + 30, startY, 20, c1);
+                Raylib.DrawText("Nivel Actual: " + (GameManager.BonusHealth / 20), (int)storeBox.X + 600, startY, 20, Color.SkyBlue);
+
+                // Opción 2: Velocidad
+                Color c2 = GameManager.GlobalCoins >= 100 ? Color.White : Color.DarkGray;
+                Raylib.DrawText("[2] Suela Gastada (+15 Velocidad Base) - 100 Monedas", (int)storeBox.X + 30, startY + lineSpacing, 20, c2);
+                Raylib.DrawText("Nivel Actual: " + (GameManager.BonusSpeed / 15), (int)storeBox.X + 600, startY + lineSpacing, 20, Color.SkyBlue);
+
+                // Opción 3: Daño Látigo
+                Color c3 = GameManager.GlobalCoins >= 150 ? Color.White : Color.DarkGray;
+                Raylib.DrawText("[3] Pesa de Cemento (+10% Daño Látigo) - 150 Monedas", (int)storeBox.X + 30, startY + lineSpacing * 2, 20, c3);
+                Raylib.DrawText("Nivel Actual: " + GameManager.BonusDamage, (int)storeBox.X + 600, startY + lineSpacing * 2, 20, Color.SkyBlue);
+
+                // Botón volver
+                int flashAlpha = (int)(155 + 100 * Math.Sin(Raylib.GetTime() * 5.0f));
+                Raylib.DrawText("Presiona ESC para volver al menú", screenWidth / 2 - 180, screenHeight - 60, 20, new Color(200, 200, 200, flashAlpha));
             }
 
             Raylib.EndDrawing();

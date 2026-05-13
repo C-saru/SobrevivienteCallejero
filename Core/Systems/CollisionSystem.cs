@@ -105,7 +105,6 @@ namespace VampireSurvivorsClone
                         if (GameManager.enemies[j].IsActive && Raylib.CheckCollisionCircles(GameManager.manualProjectiles[i].Position, GameManager.manualProjectiles[i].Size, GameManager.enemies[j].Position + new Vector2(GameManager.enemies[j].Size / 2), GameManager.enemies[j].Size / 2))
                         {
                             GameManager.enemies[j].Health -= 15.0f;
-                            GameManager.enemies[j].HitFlashTimer = 0.1f;
                             GameManager.SpawnDamageText(GameManager.enemies[j].Position, 15);
                             GameManager.manualProjectiles[i].IsActive = false;
                             GameManager.HitStopTimer = GameManager.enemies[j].Type == 3 ? 0.06f : 0.03f;
@@ -127,7 +126,6 @@ namespace VampireSurvivorsClone
                         if (GameManager.enemies[j].IsActive && Raylib.CheckCollisionCircles(GameManager.projectiles[i].Position, GameManager.projectiles[i].Size, GameManager.enemies[j].Position + new Vector2(GameManager.enemies[j].Size / 2), GameManager.enemies[j].Size / 2))
                         {
                             GameManager.enemies[j].Health -= 30.0f;
-                            GameManager.enemies[j].HitFlashTimer = 0.1f;
                             GameManager.SpawnDamageText(GameManager.enemies[j].Position, 30);
                             GameManager.projectiles[i].IsActive = false;
                             GameManager.HitStopTimer = GameManager.enemies[j].Type == 3 ? 0.06f : 0.03f;
@@ -149,7 +147,6 @@ namespace VampireSurvivorsClone
                         if (GameManager.enemies[j].IsActive && j != GameManager.bouncingProjectiles[i].TargetIndex && Raylib.CheckCollisionCircles(GameManager.bouncingProjectiles[i].Position, GameManager.bouncingProjectiles[i].Size, GameManager.enemies[j].Position + new Vector2(GameManager.enemies[j].Size / 2), GameManager.enemies[j].Size / 2))
                         {
                             GameManager.enemies[j].Health -= 20.0f;
-                            GameManager.enemies[j].HitFlashTimer = 0.1f;
                             GameManager.SpawnDamageText(GameManager.enemies[j].Position, 20);
                             GameManager.enemies[j].FreezeTimer = 1.0f;
                             GameManager.HitStopTimer = GameManager.enemies[j].Type == 3 ? 0.06f : 0.03f;
@@ -190,7 +187,6 @@ namespace VampireSurvivorsClone
                         if (GameManager.enemies[j].IsActive && Raylib.CheckCollisionCircles(GameManager.puddles[i].Position, GameManager.puddles[i].Radius, GameManager.enemies[j].Position + new Vector2(GameManager.enemies[j].Size / 2), GameManager.enemies[j].Size / 2))
                         {
                             GameManager.enemies[j].Health -= 30.0f * deltaTime;
-                            GameManager.enemies[j].HitFlashTimer = 0.1f;
                             
                             if (GameManager.GameTime % 0.5f < deltaTime) 
                             {
@@ -212,7 +208,6 @@ namespace VampireSurvivorsClone
                     if (WeaponManager.isAttacking && Raylib.CheckCollisionRecs(WeaponManager.attackHitbox, enemyRect))
                     {
                         GameManager.enemies[i].Health -= 50.0f;
-                        GameManager.enemies[i].HitFlashTimer = 0.1f;
                         GameManager.SpawnDamageText(GameManager.enemies[i].Position, 50);
                         GameManager.enemies[i].Position -= Vector2.Normalize(player.Position - GameManager.enemies[i].Position) * 20.0f;
                         GameManager.HitStopTimer = GameManager.enemies[i].Type == 3 ? 0.06f : 0.03f;
@@ -223,7 +218,6 @@ namespace VampireSurvivorsClone
                     {
                         int whipDmg = 40;
                         GameManager.enemies[i].Health -= whipDmg;
-                        GameManager.enemies[i].HitFlashTimer = 0.1f;
                         GameManager.SpawnDamageText(GameManager.enemies[i].Position, whipDmg);
                         GameManager.HitStopTimer = GameManager.enemies[i].Type == 3 ? 0.06f : 0.03f;
                         CheckEnemyDeath(i);
@@ -265,13 +259,19 @@ namespace VampireSurvivorsClone
         {
             if (GameManager.enemies[index].Health <= 0)
             {
-                if (GameManager.enemies[index].IsBoss && GameManager.IsStoryMode)
+                GameManager.enemies[index].IsActive = false;
+                
+                // Efecto de Partículas al morir (sangre/polvo)
+                Color deathColor = GameManager.enemies[index].Type == 3 ? Color.Purple : Color.Red;
+                if (GameManager.enemies[index].Type == 8) deathColor = Color.DarkGray; // Camionetica
+                GameManager.SpawnParticles(GameManager.enemies[index].Position, deathColor, 15);
+
+                // Hit-Stop para Jefes o Mini-Jefes
+                if (GameManager.enemies[index].Type == 3 || GameManager.enemies[index].Type == 1 || GameManager.enemies[index].Type == 2)
                 {
-                    GameManager.State = GameState.GameWon;
+                    GameManager.HitStopTimer = 0.15f;
                 }
 
-                GameManager.enemies[index].IsActive = false;
-                GameManager.SpawnParticles(GameManager.enemies[index].Position, GameManager.random.Next(10, 16), Raylib_cs.Color.Red);
                 // La recompensa ahora escala con la dificultad
                 int baseValue = GameManager.enemies[index].Type == 3 ? 10 : (GameManager.enemies[index].Type == 2 ? 5 : 1);
                 int scaledValue = (int)(baseValue * GameManager.DifficultyMultiplier);

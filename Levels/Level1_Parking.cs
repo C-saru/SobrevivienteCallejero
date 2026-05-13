@@ -9,7 +9,12 @@ namespace VampireSurvivorsClone
         public Rectangle Bounds { get; } = new Rectangle(-1500, -1500, 3000, 3000);
         private bool event60sFired = false; 
         private bool event120sFired = false;
-        private float horaPicoTimer = 0.0f;
+        private bool event180sFired = false;
+        private bool event240sFired = false;
+        private bool event300sFired = false;
+        
+        // Custom flags for special states
+        public static bool IsDarknessEvent = false;
 
         public void Initialize()
         {
@@ -38,14 +43,47 @@ namespace VampireSurvivorsClone
             player.Position.X = Math.Clamp(player.Position.X, Bounds.X, Bounds.X + Bounds.Width - player.Size);
             player.Position.Y = Math.Clamp(player.Position.Y, Bounds.Y, Bounds.Y + Bounds.Height - player.Size);
 
-            // Generar al Jefe a los 180 segundos
-            if (gameTime >= 180.0f && !GameManager.BossSpawned)
+            // Eventos del Game-Loop por minuto
+
+            // Minuto 1: Enjambre de Bachaqueros
+            if (gameTime >= 60.0f && !event60sFired) 
+            { 
+                event60sFired = true; 
+                SpawnCircleWave(player.Position, 4, 30, 400.0f); // 4 = Bachaquero
+            }
+
+            // Minuto 2: Mini-jefe "Fiscal de Tránsito" (usaremos tanque temporalmente o crearemos un tipo si existe)
+            // Por ahora usamos el tipo 2 (Tanque) pero con estadísticas bufadas por ser mini-jefe
+            if (gameTime >= 120.0f && !event120sFired) 
+            { 
+                event120sFired = true; 
+                SpawnMiniBoss(player.Position, 2, 500f); 
+            }
+
+            // Minuto 3: Hora Pico (Camioneticas en fila)
+            if (gameTime >= 180.0f && !event180sFired)
             {
+                event180sFired = true;
+                SpawnCamioneticaRush(player.Position);
+            }
+
+            // Minuto 4: Mini-jefe "Motorizado Lider"
+            if (gameTime >= 240.0f && !event240sFired)
+            {
+                event240sFired = true;
+                SpawnMiniBoss(player.Position, 1, 400f); // 1 = Motorizado
+            }
+
+            // Minuto 5: Jefe final con efecto visual (apagón)
+            if (gameTime >= 300.0f && !event300sFired)
+            {
+                event300sFired = true;
+                IsDarknessEvent = true; // Activa el efecto de apagón
                 GameManager.BossSpawned = true;
                 SpawnBoss(player.Position);
             }
 
-            if (GameManager.BossAcosoMode)
+            if (GameManager.BossAcosoMode && GameManager.BossSpawned)
             {
                 bool bossIsActive = false;
                 for (int i = 0; i < GameManager.enemies.Length; i++)
@@ -59,40 +97,12 @@ namespace VampireSurvivorsClone
 
                 if (!bossIsActive)
                 {
+                    IsDarknessEvent = false; // Termina el apagón al morir el boss
                     GameManager.BossRespawnTimer += deltaTime;
                     if (GameManager.BossRespawnTimer >= 5.0f)
                     {
                         SpawnBoss(player.Position);
                         GameManager.BossRespawnTimer = 0.0f;
-                    }
-                }
-            }
-
-            if (gameTime >= 60.0f && gameTime < 70.0f)
-            {
-                if (!event60sFired)
-                {
-                    event60sFired = true;
-                    SpawnCircleWave(player.Position, 4, 15, 400.0f);
-                }
-            }
-            
-            if (gameTime >= 120.0f && !event120sFired)
-            {
-                event120sFired = true;
-                SpawnBoss(player.Position, 2, 3.0f);
-            }
-
-            if (gameTime >= 180.0f && gameTime <= 210.0f)
-            {
-                horaPicoTimer -= deltaTime;
-                if (horaPicoTimer <= 0)
-                {
-                    horaPicoTimer = 5.0f;
-                    int count = GameManager.random.Next(2, 4);
-                    for (int i = 0; i < count; i++)
-                    {
-                        SpawnHoraPico(player.Position);
                     }
                 }
             }
@@ -193,7 +203,7 @@ namespace VampireSurvivorsClone
             }
         }
 
-        private void SpawnBoss(Vector2 playerPosition, int type = 3, float healthMultiplier = 1.0f)
+        private void SpawnBoss(Vector2 playerPosition)
         {
             for (int i = 0; i < GameManager.enemies.Length; i++)
             {
@@ -205,16 +215,11 @@ namespace VampireSurvivorsClone
                     GameManager.enemies[i].DashTimer = 0.0f;
                     GameManager.enemies[i].IsDashing = false;
                     GameManager.enemies[i].StateTimer = 0.0f;
-                    GameManager.enemies[i].IsHoraPico = false;
-                    GameManager.enemies[i].IsBoss = false;
-
-                    if (type == 3) GameManager.enemies[i].IsBoss = true;
-                    if (type == 2 && GameManager.IsStoryMode) GameManager.enemies[i].IsBoss = true;
                     
-                    GameManager.enemies[i].Type = type;
-                    GameManager.enemies[i].Size = GameConfig.Enemies[type].Size;
-                    GameManager.enemies[i].BaseSpeed = GameConfig.Enemies[type].BaseSpeed;
-                    GameManager.enemies[i].Health = GameConfig.Enemies[type].Health * healthMultiplier;
+                    GameManager.enemies[i].Type = 3; // Jefe
+                    GameManager.enemies[i].Size = GameConfig.Enemies[3].Size;
+                    GameManager.enemies[i].BaseSpeed = GameConfig.Enemies[3].BaseSpeed;
+                    GameManager.enemies[i].Health = GameConfig.Enemies[3].Health;
 
                     float angle = (float)(GameManager.random.NextDouble() * Math.PI * 2);
                     float distance = 1000.0f; // Aparece un poco más lejos
@@ -231,7 +236,7 @@ namespace VampireSurvivorsClone
             }
         }
 
-        private void SpawnHoraPico(Vector2 playerPosition)
+        private void SpawnMiniBoss(Vector2 playerPosition, int baseType, float extraHealth)
         {
             for (int i = 0; i < GameManager.enemies.Length; i++)
             {
@@ -243,28 +248,80 @@ namespace VampireSurvivorsClone
                     GameManager.enemies[i].DashTimer = 0.0f;
                     GameManager.enemies[i].IsDashing = false;
                     GameManager.enemies[i].StateTimer = 0.0f;
-                    GameManager.enemies[i].IsHoraPico = true;
                     
-                    int type = 8;
-                    GameManager.enemies[i].Type = type;
-                    GameManager.enemies[i].Size = GameConfig.Enemies[type].Size;
-                    GameManager.enemies[i].BaseSpeed = GameConfig.Enemies[type].BaseSpeed * 2.0f;
-                    GameManager.enemies[i].Health = GameConfig.Enemies[type].Health;
+                    GameManager.enemies[i].Type = baseType;
+                    GameManager.enemies[i].Size = GameConfig.Enemies[baseType].Size * 1.5f; // Más grande
+                    GameManager.enemies[i].BaseSpeed = GameConfig.Enemies[baseType].BaseSpeed;
+                    GameManager.enemies[i].Health = GameConfig.Enemies[baseType].Health + extraHealth; // Más vida
 
                     float angle = (float)(GameManager.random.NextDouble() * Math.PI * 2);
-                    float distance = 1000.0f;
+                    float distance = 800.0f;
                     
                     Vector2 spawnPos = playerPosition + new Vector2((float)Math.Cos(angle), (float)Math.Sin(angle)) * distance;
-                    Vector2 destPos = playerPosition - new Vector2((float)Math.Cos(angle), (float)Math.Sin(angle)) * distance;
-                    
+                    spawnPos.X = Math.Clamp(spawnPos.X, Bounds.X, Bounds.X + Bounds.Width - GameManager.enemies[i].Size);
+                    spawnPos.Y = Math.Clamp(spawnPos.Y, Bounds.Y, Bounds.Y + Bounds.Height - GameManager.enemies[i].Size);
+
                     GameManager.enemies[i].Position = spawnPos;
-                    // Pre-calculate dash direction so they go in a straight line crossing the screen
-                    GameManager.enemies[i].DashDirection = Vector2.Normalize(destPos - spawnPos);
                     break;
                 }
             }
         }
 
-        private void SpawnCircleWave(Vector2 center, int enemyType, int count, float radius) { float angleStep = (float)(Math.PI * 2) / count; for (int k = 0; k < count; k++) { for (int i = 0; i < GameManager.enemies.Length; i++) { if (!GameManager.enemies[i].IsActive) { GameManager.enemies[i].IsActive = true; GameManager.enemies[i].Type = enemyType; GameManager.enemies[i].Size = GameConfig.Enemies[enemyType].Size; GameManager.enemies[i].BaseSpeed = GameConfig.Enemies[enemyType].BaseSpeed; GameManager.enemies[i].Health = GameConfig.Enemies[enemyType].Health; float angle = k * angleStep; Vector2 spawnPos = center + new Vector2((float)Math.Cos(angle), (float)Math.Sin(angle)) * radius; spawnPos.X = Math.Clamp(spawnPos.X, Bounds.X, Bounds.X + Bounds.Width - GameManager.enemies[i].Size); spawnPos.Y = Math.Clamp(spawnPos.Y, Bounds.Y, Bounds.Y + Bounds.Height - GameManager.enemies[i].Size); GameManager.enemies[i].Position = spawnPos; break; } } } }
+        private void SpawnCamioneticaRush(Vector2 playerPosition)
+        {
+            // Spawnea 5 camioneticas en fila horizontal arriba del jugador
+            for(int k = 0; k < 5; k++)
+            {
+                for (int i = 0; i < GameManager.enemies.Length; i++)
+                {
+                    if (!GameManager.enemies[i].IsActive)
+                    {
+                        GameManager.enemies[i].IsActive = true;
+                        GameManager.enemies[i].InvincibilityTimer = 0.0f;
+                        GameManager.enemies[i].FreezeTimer = 0.0f;
+                        GameManager.enemies[i].DashTimer = 0.0f;
+                        GameManager.enemies[i].IsDashing = true; // Empiezan dasheando
+                        GameManager.enemies[i].StateTimer = 0.0f;
+                        
+                        GameManager.enemies[i].Type = 8; // Camionetica
+                        GameManager.enemies[i].Size = GameConfig.Enemies[8].Size;
+                        GameManager.enemies[i].BaseSpeed = GameConfig.Enemies[8].BaseSpeed;
+                        GameManager.enemies[i].Health = GameConfig.Enemies[8].Health;
+
+                        // Posición en fila por encima de la pantalla
+                        Vector2 spawnPos = playerPosition + new Vector2(-400 + (k * 200), -800);
+                        GameManager.enemies[i].Position = spawnPos;
+                        GameManager.enemies[i].DashDirection = new Vector2(0, 1); // Hacia abajo
+                        break;
+                    }
+                }
+            }
+        }
+
+        private void SpawnCircleWave(Vector2 center, int enemyType, int count, float radius) 
+        { 
+            float angleStep = (float)(Math.PI * 2) / count; 
+            for (int k = 0; k < count; k++) 
+            { 
+                for (int i = 0; i < GameManager.enemies.Length; i++) 
+                { 
+                    if (!GameManager.enemies[i].IsActive) 
+                    { 
+                        GameManager.enemies[i].IsActive = true; 
+                        GameManager.enemies[i].Type = enemyType; 
+                        GameManager.enemies[i].Size = GameConfig.Enemies[enemyType].Size; 
+                        GameManager.enemies[i].BaseSpeed = GameConfig.Enemies[enemyType].BaseSpeed; 
+                        GameManager.enemies[i].Health = GameConfig.Enemies[enemyType].Health; 
+                        
+                        float angle = k * angleStep; 
+                        Vector2 spawnPos = center + new Vector2((float)Math.Cos(angle), (float)Math.Sin(angle)) * radius; 
+                        spawnPos.X = Math.Clamp(spawnPos.X, Bounds.X, Bounds.X + Bounds.Width - GameManager.enemies[i].Size); 
+                        spawnPos.Y = Math.Clamp(spawnPos.Y, Bounds.Y, Bounds.Y + Bounds.Height - GameManager.enemies[i].Size); 
+                        GameManager.enemies[i].Position = spawnPos; 
+                        break; 
+                    } 
+                } 
+            } 
+        }
     }
 }
