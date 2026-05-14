@@ -456,7 +456,6 @@ namespace VampireSurvivorsClone
 
                 DrawScreenEffects(screenWidth, screenHeight, ref player);
                 
-                // --- DEV MODE VISUAL (TAREA 1 y 2) ---
                 if (GameManager.DevMode)
                 {
                     Raylib.DrawText("DEV MODE ON", 20, 60, 20, Color.Magenta);
