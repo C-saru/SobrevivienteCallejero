@@ -208,6 +208,37 @@ namespace VampireSurvivorsClone
         public static void Update(float deltaTime, ref Player player, ref Camera2D camera, int screenWidth, int screenHeight)
         {
             MenuTime += deltaTime;
+
+            HandleGlobalInput(ref player);
+
+            if (State == GameState.StartMenu)
+            {
+                UpdateStartMenu(ref player);
+            }
+            else if (State == GameState.ChallengesMenu)
+            {
+                UpdateChallengesMenu(ref player);
+            }
+            else if (State == GameState.Playing)
+            {
+                UpdatePlaying(deltaTime, ref player, ref camera);
+            }
+            else if (State == GameState.LevelUpMenu)
+            {
+                UpdateLevelUpMenu(ref player, screenWidth, screenHeight);
+            }
+            else if (State == GameState.GameOver || State == GameState.GameWon)
+            {
+                UpdateGameOver(ref player);
+            }
+            else if (State == GameState.StoreMenu)
+            {
+                UpdateStoreMenu();
+            }
+        }
+
+        private static void HandleGlobalInput(ref Player player)
+        {
             // Dificultad Dinámica
             if (Raylib.IsKeyPressed(KeyboardKey.KpAdd)) DifficultyMultiplier += 0.1f;
             if (Raylib.IsKeyPressed(KeyboardKey.KpSubtract)) DifficultyMultiplier = Math.Max(0.1f, DifficultyMultiplier - 0.1f);
@@ -218,6 +249,7 @@ namespace VampireSurvivorsClone
                 if (State == GameState.Playing) State = GameState.StartMenu;
                 Raylib.EnableCursor();
             }
+
             // Gestión del cursor para el modo FPS
             if (State == GameState.Playing && CurrentMode == GameMode.Story3D)
             {
@@ -242,203 +274,208 @@ namespace VampireSurvivorsClone
                     player.HasPuddle = true;
                 }
             }
+        }
 
-            if (State == GameState.StartMenu)
+        private static void UpdateStartMenu(ref Player player)
+        {
+            if (Raylib.IsKeyPressed(KeyboardKey.F)) { UseStaticSprites = !UseStaticSprites; }
+            if (Raylib.IsKeyPressed(KeyboardKey.M))
             {
-                if (Raylib.IsKeyPressed(KeyboardKey.F)) { UseStaticSprites = !UseStaticSprites; }
-                if (Raylib.IsKeyPressed(KeyboardKey.M)) 
-                { 
-                    CurrentMode = CurrentMode == GameMode.Arcade2D ? GameMode.Story3D : GameMode.Arcade2D; 
-                }
-                if (Raylib.IsKeyPressed(KeyboardKey.T)) State = GameState.StoreMenu;
-
-                // Navegación del menú
-                if (Raylib.IsKeyPressed(KeyboardKey.Up) || Raylib.IsKeyPressed(KeyboardKey.W)) MenuSelection--;
-                if (Raylib.IsKeyPressed(KeyboardKey.Down) || Raylib.IsKeyPressed(KeyboardKey.S)) MenuSelection++;
-
-                // 1. Cambia los límites de navegación:
-                if (MenuSelection < 0) MenuSelection = 5; // Antes era 4
-                if (MenuSelection > 5) MenuSelection = 0; // Antes era 4
-
-                if (Raylib.IsKeyPressed(KeyboardKey.Enter))
-                {
-                    // 2. En el switch (MenuSelection), añade la opción 3 (empuja las demás hacia abajo):
-                    switch (MenuSelection)
-                    {
-                        case 0: // Modo Arcade
-                            IsStoryMode = false;
-                            CurrentMode = GameMode.Arcade2D;
-                            ResetGame(ref player);
-                            CurrentLevel = new Level1_Parking();
-                            CurrentLevel.Initialize();
-                            State = GameState.Playing;
-                            break;
-                        case 1: // Modo Historia
-                            IsStoryMode = true;
-                            CurrentMode = GameMode.Story3D;
-                            ResetGame(ref player);
-                            CurrentLevel = new Level1_Parking();
-                            CurrentLevel.Initialize();
-                            State = GameState.Playing;
-                            break;
-                        case 2: // Desafíos
-                            State = GameState.ChallengesMenu;
-                            break;
-                        case 3: // NUEVO: MINIJUEGOS
-                            IsStoryMode = false;
-                            ActiveChallenge = 0;
-                            ResetGame(ref player);
-                            CurrentLevel = new Level2_Autopista();
-                            State = GameState.Playing;
-                            break;
-                        case 4: // El Kiosko
-                            State = GameState.StoreMenu;
-                            break;
-                        case 5: // Salir
-                            QuitGame = true;
-                            break;
-                    }
-                }
+                CurrentMode = CurrentMode == GameMode.Arcade2D ? GameMode.Story3D : GameMode.Arcade2D;
             }
-            else if (State == GameState.ChallengesMenu)
+            if (Raylib.IsKeyPressed(KeyboardKey.T)) State = GameState.StoreMenu;
+
+            // Navegación del menú
+            if (Raylib.IsKeyPressed(KeyboardKey.Up) || Raylib.IsKeyPressed(KeyboardKey.W)) MenuSelection--;
+            if (Raylib.IsKeyPressed(KeyboardKey.Down) || Raylib.IsKeyPressed(KeyboardKey.S)) MenuSelection++;
+
+            // 1. Cambia los límites de navegación:
+            if (MenuSelection < 0) MenuSelection = 5; // Antes era 4
+            if (MenuSelection > 5) MenuSelection = 0; // Antes era 4
+
+            if (Raylib.IsKeyPressed(KeyboardKey.Enter))
             {
-                if (Raylib.IsKeyPressed(KeyboardKey.Up) || Raylib.IsKeyPressed(KeyboardKey.W)) ChallengeMenuSelection--;
-                if (Raylib.IsKeyPressed(KeyboardKey.Down) || Raylib.IsKeyPressed(KeyboardKey.S)) ChallengeMenuSelection++;
-                if (ChallengeMenuSelection < 0) ChallengeMenuSelection = 2;
-                if (ChallengeMenuSelection > 2) ChallengeMenuSelection = 0;
-
-                if (Raylib.IsKeyPressed(KeyboardKey.Enter))
+                // 2. En el switch (MenuSelection), añade la opción 3 (empuja las demás hacia abajo):
+                switch (MenuSelection)
                 {
-                    if (ChallengeMenuSelection == 0) { ActiveChallenge = 1; State = GameState.Playing; ResetGame(ref player); CurrentLevel = new Level1_Parking(); CurrentLevel.Initialize(); }
-                    else if (ChallengeMenuSelection == 1) { ActiveChallenge = 2; State = GameState.Playing; ResetGame(ref player); CurrentLevel = new Level1_Parking(); CurrentLevel.Initialize(); }
-                    else { State = GameState.StartMenu; }
-                }
-                if (Raylib.IsKeyPressed(KeyboardKey.Escape)) State = GameState.StartMenu;
-            }
-            else if (State == GameState.Playing)
-            {
-                GameTime += deltaTime;
-                if (Raylib.IsKeyPressed(KeyboardKey.V)) 
-                {
-                    CurrentMode = CurrentMode == GameMode.Arcade2D ? GameMode.Story3D : GameMode.Arcade2D; 
-                }
-
-                if (HitStopTimer > 0) { HitStopTimer -= deltaTime; return; }
-                if (DrunkTimer > 0) { DrunkTimer -= deltaTime; }
-
-                if (GameTime >= 300.0f) 
-                {
-                    State = GameState.GameWon;
-                    return;
-                }
-
-                PlayerSystem.Update(deltaTime, ref player, CurrentMode, obstacles);
-                camera.Target = player.Position + new Vector2(player.Size / 2.0f);
-
-                if (player.DamageFlashTimer > 0)
-                {
-                    player.DamageFlashTimer -= deltaTime;
-                }
-
-                if (player.ScreenShakeTimer > 0)
-                {
-                    player.ScreenShakeTimer -= deltaTime;
-                }
-
-                // La recolección de Pickups ahora se procesa en CollisionSystem.Update
-
-                float baseInterval = Math.Max(0.5f, 2.0f - (GameTime / 200.0f));
-                float currentSpawnInterval = baseInterval / Math.Max(0.1f, GameManager.DifficultyMultiplier);
-                spawnTimer += deltaTime;
-                if (spawnTimer >= currentSpawnInterval)
-                {
-                    CurrentLevel.SpawnEnemy(player.Position, GameTime);
-                    spawnTimer = 0.0f;
-                }
-
-                CurrentLevel.UpdateLevel(deltaTime, GameTime, ref player);
-                InputManager.HandleManualWeapon(ref player, deltaTime);
-                WeaponManager.UpdateWeapons(deltaTime, ref player);
-
-                for (int i = 0; i < damageTexts.Length; i++)
-                {
-                    if (damageTexts[i].IsActive)
-                    {
-                        damageTexts[i].LifeTime -= deltaTime;
-                        // Hacemos que flote hacia arriba y un poco hacia un lado (movimiento pseudo-físico ligero)
-                        damageTexts[i].Position.Y -= 60.0f * deltaTime;
-                        damageTexts[i].Position.X += (float)Math.Sin(GameTime * 10f + i) * 10f * deltaTime;
-                        
-                        if (damageTexts[i].LifeTime <= 0)
-                        {
-                            damageTexts[i].IsActive = false;
-                        }
-                    }
-                }
-
-                for (int i = 0; i < particles.Length; i++)
-                {
-                    if (particles[i].IsActive)
-                    {
-                        particles[i].LifeTime -= deltaTime;
-                        if (particles[i].LifeTime <= 0)
-                        {
-                            particles[i].IsActive = false;
-                        }
-                        else
-                        {
-                            particles[i].Position += particles[i].Velocity * deltaTime;
-                            particles[i].Velocity *= 0.95f; // Fricción
-                        }
-                    }
-                }
-
-                EnemySystem.Update(deltaTime, ref player);
-                ProjectileSystem.Update(deltaTime); // <--- ESTA ES LA CONEXIÓN VITAL
-                CollisionSystem.Update(deltaTime, ref player);
-            }
-            else if (State == GameState.LevelUpMenu)
-            {
-                int baseCardWidth = 300;
-                int baseCardHeight = 180;
-                int cardSpacing = 40;
-                int totalWidth = (baseCardWidth * 3) + (cardSpacing * 2);
-                int startX = (screenWidth - totalWidth) / 2;
-                int cardY = screenHeight / 2 - baseCardHeight / 2 + 20;
-
-                Vector2 mousePos = Raylib.GetMousePosition();
-
-                for (int i = 0; i < 3; i++)
-                {
-                    Rectangle baseRec = new Rectangle(
-                        startX + i * (baseCardWidth + cardSpacing),
-                        cardY,
-                        baseCardWidth,
-                        baseCardHeight
-                    );
-
-                    if (Raylib.CheckCollisionPointRec(mousePos, baseRec) && Raylib.IsMouseButtonPressed(MouseButton.Left))
-                    {
-                        ApplyUpgrade(currentUpgrades[i].EffectId, ref player);
+                    case 0: // Modo Arcade
+                        IsStoryMode = false;
+                        CurrentMode = GameMode.Arcade2D;
+                        ResetGame(ref player);
+                        CurrentLevel = new Level1_Parking();
+                        CurrentLevel.Initialize();
+                        State = GameState.Playing;
                         break;
+                    case 1: // Modo Historia
+                        IsStoryMode = true;
+                        CurrentMode = GameMode.Story3D;
+                        ResetGame(ref player);
+                        CurrentLevel = new Level1_Parking();
+                        CurrentLevel.Initialize();
+                        State = GameState.Playing;
+                        break;
+                    case 2: // Desafíos
+                        State = GameState.ChallengesMenu;
+                        break;
+                    case 3: // NUEVO: MINIJUEGOS
+                        IsStoryMode = false;
+                        ActiveChallenge = 0;
+                        ResetGame(ref player);
+                        CurrentLevel = new Level2_Autopista();
+                        State = GameState.Playing;
+                        break;
+                    case 4: // El Kiosko
+                        State = GameState.StoreMenu;
+                        break;
+                    case 5: // Salir
+                        QuitGame = true;
+                        break;
+                }
+            }
+        }
+
+        private static void UpdateChallengesMenu(ref Player player)
+        {
+            if (Raylib.IsKeyPressed(KeyboardKey.Up) || Raylib.IsKeyPressed(KeyboardKey.W)) ChallengeMenuSelection--;
+            if (Raylib.IsKeyPressed(KeyboardKey.Down) || Raylib.IsKeyPressed(KeyboardKey.S)) ChallengeMenuSelection++;
+            if (ChallengeMenuSelection < 0) ChallengeMenuSelection = 2;
+            if (ChallengeMenuSelection > 2) ChallengeMenuSelection = 0;
+
+            if (Raylib.IsKeyPressed(KeyboardKey.Enter))
+            {
+                if (ChallengeMenuSelection == 0) { ActiveChallenge = 1; State = GameState.Playing; ResetGame(ref player); CurrentLevel = new Level1_Parking(); CurrentLevel.Initialize(); }
+                else if (ChallengeMenuSelection == 1) { ActiveChallenge = 2; State = GameState.Playing; ResetGame(ref player); CurrentLevel = new Level1_Parking(); CurrentLevel.Initialize(); }
+                else { State = GameState.StartMenu; }
+            }
+            if (Raylib.IsKeyPressed(KeyboardKey.Escape)) State = GameState.StartMenu;
+        }
+
+        private static void UpdatePlaying(float deltaTime, ref Player player, ref Camera2D camera)
+        {
+            GameTime += deltaTime;
+            if (Raylib.IsKeyPressed(KeyboardKey.V))
+            {
+                CurrentMode = CurrentMode == GameMode.Arcade2D ? GameMode.Story3D : GameMode.Arcade2D;
+            }
+
+            if (HitStopTimer > 0) { HitStopTimer -= deltaTime; return; }
+            if (DrunkTimer > 0) { DrunkTimer -= deltaTime; }
+
+            if (GameTime >= 300.0f)
+            {
+                State = GameState.GameWon;
+                return;
+            }
+
+            PlayerSystem.Update(deltaTime, ref player, CurrentMode, obstacles);
+            camera.Target = player.Position + new Vector2(player.Size / 2.0f);
+
+            if (player.DamageFlashTimer > 0)
+            {
+                player.DamageFlashTimer -= deltaTime;
+            }
+
+            if (player.ScreenShakeTimer > 0)
+            {
+                player.ScreenShakeTimer -= deltaTime;
+            }
+
+            // La recolección de Pickups ahora se procesa en CollisionSystem.Update
+
+            float baseInterval = Math.Max(0.5f, 2.0f - (GameTime / 200.0f));
+            float currentSpawnInterval = baseInterval / Math.Max(0.1f, GameManager.DifficultyMultiplier);
+            spawnTimer += deltaTime;
+            if (spawnTimer >= currentSpawnInterval)
+            {
+                CurrentLevel.SpawnEnemy(player.Position, GameTime);
+                spawnTimer = 0.0f;
+            }
+
+            CurrentLevel.UpdateLevel(deltaTime, GameTime, ref player);
+            InputManager.HandleManualWeapon(ref player, deltaTime);
+            WeaponManager.UpdateWeapons(deltaTime, ref player);
+
+            for (int i = 0; i < damageTexts.Length; i++)
+            {
+                if (damageTexts[i].IsActive)
+                {
+                    damageTexts[i].LifeTime -= deltaTime;
+                    // Hacemos que flote hacia arriba y un poco hacia un lado (movimiento pseudo-físico ligero)
+                    damageTexts[i].Position.Y -= 60.0f * deltaTime;
+                    damageTexts[i].Position.X += (float)Math.Sin(GameTime * 10f + i) * 10f * deltaTime;
+
+                    if (damageTexts[i].LifeTime <= 0)
+                    {
+                        damageTexts[i].IsActive = false;
                     }
                 }
             }
-            else if (State == GameState.GameOver || State == GameState.GameWon)
+
+            for (int i = 0; i < particles.Length; i++)
             {
-                if (Raylib.IsKeyPressed(KeyboardKey.Enter))
+                if (particles[i].IsActive)
                 {
-                    SaveGame();
-                    ResetGame(ref player);
+                    particles[i].LifeTime -= deltaTime;
+                    if (particles[i].LifeTime <= 0)
+                    {
+                        particles[i].IsActive = false;
+                    }
+                    else
+                    {
+                        particles[i].Position += particles[i].Velocity * deltaTime;
+                        particles[i].Velocity *= 0.95f; // Fricción
+                    }
                 }
             }
-            else if (State == GameState.StoreMenu)
+
+            EnemySystem.Update(deltaTime, ref player);
+            ProjectileSystem.Update(deltaTime); // <--- ESTA ES LA CONEXIÓN VITAL
+            CollisionSystem.Update(deltaTime, ref player);
+        }
+
+        private static void UpdateLevelUpMenu(ref Player player, int screenWidth, int screenHeight)
+        {
+            int baseCardWidth = 300;
+            int baseCardHeight = 180;
+            int cardSpacing = 40;
+            int totalWidth = (baseCardWidth * 3) + (cardSpacing * 2);
+            int startX = (screenWidth - totalWidth) / 2;
+            int cardY = screenHeight / 2 - baseCardHeight / 2 + 20;
+
+            Vector2 mousePos = Raylib.GetMousePosition();
+
+            for (int i = 0; i < 3; i++)
             {
-                if (Raylib.IsKeyPressed(KeyboardKey.One) && GlobalCoins >= 50) { GlobalCoins -= 50; BonusHealth += 20; SaveGame(); }
-                if (Raylib.IsKeyPressed(KeyboardKey.Two) && GlobalCoins >= 100) { GlobalCoins -= 100; BonusSpeed += 15; SaveGame(); }
-                if (Raylib.IsKeyPressed(KeyboardKey.Three) && GlobalCoins >= 150) { GlobalCoins -= 150; BonusDamage += 1; SaveGame(); }
-                if (Raylib.IsKeyPressed(KeyboardKey.Escape)) State = GameState.StartMenu;
+                Rectangle baseRec = new Rectangle(
+                    startX + i * (baseCardWidth + cardSpacing),
+                    cardY,
+                    baseCardWidth,
+                    baseCardHeight
+                );
+
+                if (Raylib.CheckCollisionPointRec(mousePos, baseRec) && Raylib.IsMouseButtonPressed(MouseButton.Left))
+                {
+                    ApplyUpgrade(currentUpgrades[i].EffectId, ref player);
+                    break;
+                }
             }
+        }
+
+        private static void UpdateGameOver(ref Player player)
+        {
+            if (Raylib.IsKeyPressed(KeyboardKey.Enter))
+            {
+                SaveGame();
+                ResetGame(ref player);
+            }
+        }
+
+        private static void UpdateStoreMenu()
+        {
+            if (Raylib.IsKeyPressed(KeyboardKey.One) && GlobalCoins >= 50) { GlobalCoins -= 50; BonusHealth += 20; SaveGame(); }
+            if (Raylib.IsKeyPressed(KeyboardKey.Two) && GlobalCoins >= 100) { GlobalCoins -= 100; BonusSpeed += 15; SaveGame(); }
+            if (Raylib.IsKeyPressed(KeyboardKey.Three) && GlobalCoins >= 150) { GlobalCoins -= 150; BonusDamage += 1; SaveGame(); }
+            if (Raylib.IsKeyPressed(KeyboardKey.Escape)) State = GameState.StartMenu;
         }
 
         public static void GenerateUpgrades(ref Player player)
