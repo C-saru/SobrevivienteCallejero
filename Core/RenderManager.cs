@@ -81,11 +81,18 @@ namespace VampireSurvivorsClone
                     if (bgTexture.Id != 0)
                     {
                         int bgSize = 512;
+                        // Optimización Zero-GC: Reutilizamos instancias de Rectangle y Color sacándolas del bucle anidado
+                        Rectangle sourceRect = new Rectangle(0, 0, bgTexture.Width, bgTexture.Height);
+                        Rectangle destRect = new Rectangle(0, 0, bgSize, bgSize);
+                        Color tint = new Color(100, 100, 100, 255);
+
                         for (int x = -3000; x < 3000; x += bgSize)
                         {
                             for (int y = -3000; y < 3000; y += bgSize)
                             {
-                                Raylib.DrawTexturePro(bgTexture, new Rectangle(0, 0, bgTexture.Width, bgTexture.Height), new Rectangle(x, y, bgSize, bgSize), Vector2.Zero, 0.0f, new Color(100, 100, 100, 255));
+                                destRect.X = x;
+                                destRect.Y = y;
+                                Raylib.DrawTexturePro(bgTexture, sourceRect, destRect, Vector2.Zero, 0.0f, tint);
                             }
                         }
                     }
@@ -311,12 +318,16 @@ namespace VampireSurvivorsClone
                     if (GameManager.DifficultyMultiplier >= 3.0f) floorColor = Color.Red;
                     else if (GameManager.DifficultyMultiplier >= 2.0f) floorColor = Color.Orange;
 
+                    // Optimización Zero-GC: Reutilizamos Color y calculamos la distancia al cuadrado en el bucle de piso 3D
+                    Color finalLineColor = floorColor;
+
                     for (int x = startX; x <= endX; x += tileSize)
                     {
                         for (int y = startY; y <= endY; y += tileSize)
                         {
                             Vector2 targetPos = new Vector2(x, y);
-                            float dist = Vector2.Distance(player.Position, targetPos);
+                            float distSquared = Vector2.DistanceSquared(player.Position, targetPos);
+                            float dist = (float)Math.Sqrt(distSquared); // Fallback a Sqrt solo si es necesario para Alpha
                             
                             float dotProduct = dist > 0 ? Vector2.Dot(lookDir, (targetPos - player.Position) / dist) : 1.0f;
                             float currentMaxDist = (dotProduct >= 0.866f) ? 400.0f : 120.0f;
@@ -327,10 +338,10 @@ namespace VampireSurvivorsClone
                                 currentMaxDist *= 0.4f; 
                             }
 
-                            if (dist < currentMaxDist)
+                            if (distSquared < currentMaxDist * currentMaxDist)
                             {
                                 float alpha = 1.0f - (dist / currentMaxDist);
-                                Color finalLineColor = new Color(floorColor.R, floorColor.G, floorColor.B, (byte)(255 * alpha));
+                                finalLineColor.A = (byte)(255 * alpha); // Mutamos la propiedad A en lugar de instanciar un new Color
                                 Raylib.DrawLine3D(new Vector3(x, 0, y), new Vector3(x + tileSize, 0, y), finalLineColor);
                                 Raylib.DrawLine3D(new Vector3(x, 0, y), new Vector3(x, 0, y + tileSize), finalLineColor);
                             }
@@ -654,8 +665,9 @@ namespace VampireSurvivorsClone
                 
                 // AQUI REPARAMOS LA AMBIGUEDAD
                 int pulseAlpha = (int)(100 + pulse * 100); 
-                vignetteColor = new Color((int)150, (int)0, (int)0, pulseAlpha); 
-                transparentColor = new Color((int)150, (int)0, (int)0, (int)0);
+                // Mutamos las propiedades en lugar de asignar new Color
+                vignetteColor.R = 150; vignetteColor.G = 0; vignetteColor.B = 0; vignetteColor.A = (byte)pulseAlpha;
+                transparentColor.R = 150; transparentColor.G = 0; transparentColor.B = 0; transparentColor.A = 0;
             }
 
             Raylib.DrawRectangleGradientV(0, 0, screenWidth, 120, vignetteColor, transparentColor);
@@ -663,9 +675,11 @@ namespace VampireSurvivorsClone
             Raylib.DrawRectangleGradientH(0, 0, 120, screenHeight, vignetteColor, transparentColor);
             Raylib.DrawRectangleGradientH(screenWidth - 120, 0, 120, screenHeight, transparentColor, vignetteColor);
 
+            // Optimización Zero-GC: Reutilizamos la instancia de color de línea de escaneo
+            Color scanlineColor = new Color(0, 0, 0, 25);
             for (int y = 0; y < screenHeight; y += 4)
             {
-                Raylib.DrawLine(0, y, screenWidth, y, new Color(0, 0, 0, 25));
+                Raylib.DrawLine(0, y, screenWidth, y, scanlineColor);
             }
         }
 
