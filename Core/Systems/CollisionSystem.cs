@@ -69,8 +69,12 @@ namespace VampireSurvivorsClone
                 {
                     Vector2 playerCenter = player.Position + new Vector2(player.Size / 2.0f);
                     Vector2 gemCenter = GameManager.gems[i].Position + new Vector2(GameManager.gems[i].Size / 2.0f);
-                    float dist = Vector2.Distance(playerCenter, gemCenter);
-                    if (dist < player.PickupRadius * player.MagnetMult)
+
+                    // Optimización Zero-GC y Math: Usamos la distancia al cuadrado (DistanceSquared) en lugar de Distance para evitar la raíz cuadrada
+                    float distSquared = Vector2.DistanceSquared(playerCenter, gemCenter);
+                    float pickupRange = player.PickupRadius * player.MagnetMult;
+
+                    if (distSquared < pickupRange * pickupRange)
                     {
                         Vector2 pullDir = Vector2.Normalize(playerCenter - gemCenter);
                         GameManager.gems[i].Position += pullDir * 400.0f * deltaTime;

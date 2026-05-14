@@ -24,8 +24,12 @@ namespace VampireSurvivorsClone
                     else
                     {
                         GameManager.enemies[i].StateTimer += deltaTime;
+
+                        // Obtenemos la dirección al jugador
                         Vector2 dirToPlayer = Vector2.Normalize(player.Position - GameManager.enemies[i].Position);
-                        float distToPlayer = Vector2.Distance(player.Position, GameManager.enemies[i].Position);
+
+                        // Optimización: Usamos la distancia al cuadrado (DistanceSquared) para evitar la raíz cuadrada costosa (Math.Sqrt)
+                        float distToPlayerSquared = Vector2.DistanceSquared(player.Position, GameManager.enemies[i].Position);
                         
                         float enemySpeed = GameManager.enemies[i].BaseSpeed;
                         Vector2 movementDir = dirToPlayer;
@@ -69,9 +73,10 @@ namespace VampireSurvivorsClone
                                 movementDir = Vector2.Normalize(dirToPlayer * 0.4f + GameManager.enemies[i].DashDirection * 0.6f);
                                 break;
                             case 7: // Lanza-Piedras (Orbitador)
-                                if (distToPlayer < 250f)
+                                // Comparamos usando la distancia al cuadrado (250*250 = 62500, 350*350 = 122500)
+                                if (distToPlayerSquared < 62500f)
                                     movementDir = -dirToPlayer; 
-                                else if (distToPlayer > 350f)
+                                else if (distToPlayerSquared > 122500f)
                                     movementDir = dirToPlayer; 
                                 else
                                     movementDir = new Vector2(-dirToPlayer.Y, dirToPlayer.X); 
